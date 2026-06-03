@@ -421,14 +421,10 @@
                     <p id="current-provider-name" style="margin-top:6px; font-size:13px; color:#27ae60;"></p>
                 </div>
 
-                <!-- 服務類型管理 -->
+                <!-- 服務類型切換 -->
                 <div class="form-group" style="margin-top:20px;">
-                    <label>服務類型管理</label>
-                    <div id="service-types-list" style="margin-bottom:10px;"></div>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                        <input type="text" id="new-service-type-input" placeholder="新增服務類型名稱..." style="flex:1; min-width:150px; padding:8px 10px; border:1px solid #bdc3c7; border-radius:4px;">
-                        <button class="btn btn-primary" onclick="addServiceType()">+ 新增</button>
-                    </div>
+                    <label>目前服務類型</label>
+                    <div id="service-types-list" style="margin-top:8px;"></div>
                 </div>
 
                 <!-- 資料備份 -->
@@ -889,7 +885,11 @@
                 if (!data) {
                     this.data = {
                         providerName: '',
-                        serviceTypes: [],
+                        serviceTypes: [
+                            { id: 'st_clean',  typeName: '居家清潔', fields: 'home' },
+                            { id: 'st_mite',   typeName: '除塵蟎',   fields: 'home' },
+                            { id: 'st_repair', typeName: '維修服務', fields: 'repair' }
+                        ],
                         clients: [],
                         contracts: [],
                         bookings: [],
@@ -905,6 +905,35 @@
                     }
                     if (!this.data.providerName) this.data.providerName = '';
                     if (!this.data.serviceTypes) this.data.serviceTypes = [];
+                    // 確保三種固定服務類型存在
+                    // 舊資料名稱統一
+                    this.data.serviceTypes.forEach(st => {
+                        if (st.typeName === '維修') st.typeName = '維修服務';
+                        if (st.typeName === '居家清潔' || st.typeName === '除塵蟎') st.fields = st.fields || 'home';
+                        if (st.typeName === '維修服務') st.fields = st.fields || 'repair';
+                    });
+                    // 去除重複（同名只保留第一筆）
+                    const seen = {};
+                    this.data.serviceTypes = this.data.serviceTypes.filter(st => {
+                        if (seen[st.typeName]) return false;
+                        seen[st.typeName] = true;
+                        return true;
+                    });
+
+                    const fixed = [
+                        { id: 'st_clean',  typeName: '居家清潔', fields: 'home' },
+                        { id: 'st_mite',   typeName: '除塵蟎',   fields: 'home' },
+                        { id: 'st_repair', typeName: '維修服務', fields: 'repair' }
+                    ];
+                    fixed.forEach(f => {
+                        const existById = this.data.serviceTypes.find(st => st.id === f.id);
+                        const existByName = this.data.serviceTypes.find(st => st.typeName === f.typeName);
+                        if (!existById && !existByName) {
+                            this.data.serviceTypes.push(f);
+                        } else if (existByName && !existByName.fields) {
+                            existByName.fields = f.fields;
+                        }
+                    });
                     // selectedServiceType 若已不存在就清除
                     if (this.data.selectedServiceType) {
                         const exists = this.data.serviceTypes.find(st => st.id === this.data.selectedServiceType);
@@ -1100,31 +1129,23 @@
         }
 
         function renderSettingsPage() {
-            // 業者名稱
             const name = store.data.providerName || '';
             document.getElementById('provider-name-input').value = name;
             document.getElementById('current-provider-name').textContent = name ? `目前：${name}` : '';
 
-            // 服務類型清單
             const list = document.getElementById('service-types-list');
             const types = store.getServiceTypes();
-            if (types.length === 0) {
-                list.innerHTML = '<p style="color:#95a5a6;font-size:13px;">尚未新增服務類型</p>';
-            } else {
-                list.innerHTML = types.map(st => {
-                    const isActive = store.data.selectedServiceType === st.id;
-                    return `
-                        <div style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid ${isActive ? '#27ae60' : '#ecf0f1'};border-radius:6px;margin-bottom:6px;background:${isActive ? '#e8f5e9' : 'white'};">
-                            <span style="flex:1;font-weight:${isActive ? 'bold' : 'normal'};">
-                                ${st.typeName}${isActive ? ' ✅ 目前使用' : ''}
-                            </span>
-                            ${!isActive ? `<button class="btn btn-sm btn-secondary" onclick="switchServiceType('${st.id}')">切換</button>` : ''}
-                            <button class="btn btn-sm btn-danger" onclick="deleteServiceType('${st.id}','${st.typeName}')">刪除</button>
-                        </div>`;
-                }).join('');
-            }
+            list.innerHTML = types.map(st => {
+                const isActive = store.data.selectedServiceType === st.id;
+                return `
+                    <div style="display:flex;align-items:center;gap:8px;padding:10px;border:2px solid ${isActive ? '#27ae60' : '#ecf0f1'};border-radius:6px;margin-bottom:8px;background:${isActive ? '#e8f5e9' : 'white'};">
+                        <span style="flex:1;font-weight:${isActive ? 'bold' : 'normal'};">
+                            ${st.typeName}${isActive ? ' ✅ 目前使用' : ''}
+                        </span>
+                        ${!isActive ? `<button class="btn btn-sm btn-secondary" onclick="switchServiceType('${st.id}')">切換</button>` : ''}
+                    </div>`;
+            }).join('');
 
-            // 頂部切換列
             initQuickServiceSwitch();
         }
 
@@ -1289,25 +1310,43 @@
 
         function renderDynamicFields() {
             const container = document.getElementById('client-dynamic-fields');
-            container.innerHTML = `
-                <h3 style="margin-top: 20px; margin-bottom: 15px;">附加資訊</h3>
-                <div class="form-group">
-                    <label for="client-rooms">房間數</label>
-                    <input type="number" id="client-rooms" min="1" step="1">
-                </div>
-                <div class="form-group">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="client-has-children" value="true">
-                        <label for="client-has-children">是否有小孩</label>
+            const st = store.getServiceType(store.data.selectedServiceType);
+            const fields = st ? st.fields : 'home';
+
+            if (fields === 'repair') {
+                container.innerHTML = `
+                    <h3 style="margin-top:20px;margin-bottom:15px;">維修資訊</h3>
+                    <div class="form-group">
+                        <label for="client-appliance-name">電器名稱 *</label>
+                        <input type="text" id="client-appliance-name">
                     </div>
-                </div>
-                <div class="form-group">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="client-has-pets" value="true">
-                        <label for="client-has-pets">是否有寵物</label>
+                    <div class="form-group">
+                        <label>保固狀態</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="client-warranty-status" value="保固內"> 保固內</label>
+                            <label><input type="radio" name="client-warranty-status" value="保固外"> 保固外</label>
+                        </div>
+                    </div>`;
+            } else {
+                container.innerHTML = `
+                    <h3 style="margin-top:20px;margin-bottom:15px;">居家資訊</h3>
+                    <div class="form-group">
+                        <label for="client-rooms">房間數</label>
+                        <input type="number" id="client-rooms" min="1" step="1">
                     </div>
-                </div>
-            `;
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="client-has-children">
+                            <label for="client-has-children">是否有小孩</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="client-has-pets">
+                            <label for="client-has-pets">是否有寵物</label>
+                        </div>
+                    </div>`;
+            }
         }
 
         function editClient(clientId) {
@@ -1330,22 +1369,18 @@
             renderDynamicFields();
 
             const st = store.getServiceType(store.data.selectedServiceType);
-            const fields = st.dynamicFields || [];
+            const fields = st ? st.fields : 'home';
 
-            if (fields.includes('rooms') && client.rooms) {
-                document.getElementById('client-rooms').value = client.rooms;
-            }
-            if (fields.includes('hasChildren')) {
-                document.getElementById('client-has-children').checked = client.hasChildren;
-            }
-            if (fields.includes('hasPets')) {
-                document.getElementById('client-has-pets').checked = client.hasPets;
-            }
-            if (fields.includes('applianceName') && client.applianceName) {
-                document.getElementById('client-appliance-name').value = client.applianceName;
-            }
-            if (fields.includes('warrantyStatus') && client.warrantyStatus) {
-                document.querySelector(`input[name="client-warranty-status"][value="${client.warrantyStatus}"]`).checked = true;
+            if (fields === 'home') {
+                if (client.rooms) document.getElementById('client-rooms').value = client.rooms;
+                document.getElementById('client-has-children').checked = client.hasChildren || false;
+                document.getElementById('client-has-pets').checked = client.hasPets || false;
+            } else if (fields === 'repair') {
+                if (client.applianceName) document.getElementById('client-appliance-name').value = client.applianceName;
+                if (client.warrantyStatus) {
+                    const radio = document.querySelector(`input[name="client-warranty-status"][value="${client.warrantyStatus}"]`);
+                    if (radio) radio.checked = true;
+                }
             }
 
             document.getElementById('client-modal').classList.add('show');
@@ -1363,7 +1398,7 @@
 
                 const clientId = document.getElementById('client-modal').dataset.clientId;
                 const st = store.getServiceType(store.data.selectedServiceType);
-                const fields = st.dynamicFields || [];
+                const fields = st ? st.fields : 'home';
 
                 // 驗證必填欄位
                 const clientName = document.getElementById('client-name').value.trim();
@@ -1372,51 +1407,11 @@
                 const clientSource = document.querySelector('input[name="client-source"]:checked');
                 const homeType = document.querySelector('input[name="client-home-type"]:checked');
 
-                if (!clientName) {
-                    showToast('❌ 請填寫客戶姓名');
-                    return;
-                }
-                if (!phone) {
-                    showToast('❌ 請填寫聯絡電話');
-                    return;
-                }
-                if (!clientSource) {
-                    showToast('❌ 請選擇客戶來源');
-                    return;
-                }
-                if (!homeType) {
-                    showToast('❌ 請選擇住家類型');
-                    return;
-                }
-                if (!address) {
-                    showToast('❌ 請填寫服務地址');
-                    return;
-                }
-
-                // 驗證動態必填欄位
-                if (fields.includes('rooms')) {
-                    const rooms = document.getElementById('client-rooms').value;
-                    if (!rooms || rooms < 1) {
-                        showToast('❌ 請填寫房間數');
-                        return;
-                    }
-                }
-
-                if (fields.includes('applianceName')) {
-                    const applianceName = document.getElementById('client-appliance-name').value.trim();
-                    if (!applianceName) {
-                        showToast('❌ 請填寫電器名稱');
-                        return;
-                    }
-                }
-
-                if (fields.includes('warrantyStatus')) {
-                    const warrantyStatus = document.querySelector('input[name="client-warranty-status"]:checked');
-                    if (!warrantyStatus) {
-                        showToast('❌ 請選擇保固狀態');
-                        return;
-                    }
-                }
+                if (!clientName) { showToast('❌ 請填寫客戶姓名'); return; }
+                if (!phone) { showToast('❌ 請填寫聯絡電話'); return; }
+                if (!clientSource) { showToast('❌ 請選擇客戶來源'); return; }
+                if (!homeType) { showToast('❌ 請選擇住家類型'); return; }
+                if (!address) { showToast('❌ 請填寫服務地址'); return; }
 
                 const client = {
                     serviceTypeId: store.data.selectedServiceType,
@@ -1430,30 +1425,22 @@
                     serviceStatus: document.querySelector('input[name="client-service-status"]:checked')?.value || '服務中'
                 };
 
-                if (fields.includes('rooms')) {
-                    client.rooms = parseInt(document.getElementById('client-rooms').value);
-                }
-                if (fields.includes('hasChildren')) {
+                if (fields === 'home') {
+                    client.rooms = parseInt(document.getElementById('client-rooms').value) || null;
                     client.hasChildren = document.getElementById('client-has-children').checked;
-                }
-                if (fields.includes('hasPets')) {
                     client.hasPets = document.getElementById('client-has-pets').checked;
-                }
-                if (fields.includes('applianceName')) {
+                } else if (fields === 'repair') {
                     client.applianceName = document.getElementById('client-appliance-name').value.trim();
-                }
-                if (fields.includes('warrantyStatus')) {
-                    client.warrantyStatus = document.querySelector('input[name="client-warranty-status"]:checked').value;
+                    const warrantyRadio = document.querySelector('input[name="client-warranty-status"]:checked');
+                    client.warrantyStatus = warrantyRadio ? warrantyRadio.value : '';
                 }
 
                 if (clientId) {
-                    // 編輯
                     const existingClient = store.getClient(clientId);
                     Object.assign(existingClient, client);
                     store.save();
                     showToast('✅ 客戶已更新');
                 } else {
-                    // 新增
                     store.addClient(client);
                     showToast('✅ 客戶已建立');
                 }
