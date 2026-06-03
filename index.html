@@ -630,6 +630,12 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="contract-pre-used-hours">他人已服務時數</label>
+                    <input type="number" id="contract-pre-used-hours" min="0" step="0.5" value="0">
+                    <small style="color: #7f8c8d;">⚠️ 接手前他人已使用的時數，用於計算剩餘可用時數</small>
+                </div>
+
+                <div class="form-group">
                     <label>合作方式 *</label>
                     <div class="radio-group">
                         <label><input type="radio" name="contract-cooperation" value="自接" required> 自接</label>
@@ -1405,8 +1411,9 @@
                     if (!client) return '';
                     const usedHours = calculateUsedHours(contract.id);
                     const bonusHours = contract.bonusHours || 0;
+                    const preUsedHours = contract.preUsedHours || 0;
                     const totalAvailableHours = contract.totalHours + bonusHours;
-                    const remainingHours = totalAvailableHours - usedHours;
+                    const remainingHours = totalAvailableHours - preUsedHours - usedHours;
                     const expandId = `contract-expand-${contract.id}`;
                     const isEnded = remainingHours <= 0;
                     const isWarning = remainingHours > 0 && remainingHours < 3;
@@ -1414,6 +1421,7 @@
                     const endedBadge = isEnded ? '<span style="background:#ecf0f1;color:#7f8c8d;padding:2px 6px;border-radius:10px;font-size:11px;margin-left:6px;">已結束</span>' : '';
                     const itemStyle = isEnded ? 'opacity:0.55;' : '';
                     const remainingStyle = isWarning ? 'color:#e74c3c;font-weight:bold;' : isEnded ? 'color:#95a5a6;' : '';
+                    const preUsedNote = preUsedHours > 0 ? ` | 他人已服務: ${preUsedHours}h` : '';
 
                     return `
                         <div class="list-item" style="${itemStyle}">
@@ -1421,7 +1429,7 @@
                                 <div style="flex: 1;">
                                     <h4>${client.clientName}${alertIcon}${endedBadge}</h4>
                                     <p>時數: ${contract.totalHours}h + 贈送 ${bonusHours}h | 單價: ${contract.hourlyRate} 元/h</p>
-                                    <p>已使用: ${usedHours}h | 剩餘: <strong style="${remainingStyle}">${remainingHours}h</strong></p>
+                                    <p>我方使用: ${usedHours}h${preUsedNote} | 剩餘: <strong style="${remainingStyle}">${remainingHours}h</strong></p>
                                 </div>
                                 <button class="btn btn-sm btn-secondary" style="margin-left: 10px;" onclick="toggleExpand('${expandId}')">展開</button>
                             </div>
@@ -1545,12 +1553,14 @@
 
             const totalHours = parseFloat(document.getElementById('contract-total-hours').value);
             const bonusHours = parseFloat(document.getElementById('contract-bonus-hours').value) || 0;
+            const preUsedHours = parseFloat(document.getElementById('contract-pre-used-hours').value) || 0;
             const totalPrice = hourlyRate * totalHours; // 金額只計算合約時數
 
             const contract = {
                 clientId: clientId,
                 totalHours: totalHours,
                 bonusHours: bonusHours,
+                preUsedHours: preUsedHours,
                 hourlyRate: hourlyRate,
                 totalPrice: totalPrice,
                 cooperationMethod: cooperation,
@@ -1586,6 +1596,7 @@
 
             document.getElementById('contract-total-hours').value = contract.totalHours;
             document.getElementById('contract-bonus-hours').value = contract.bonusHours || 0;
+            document.getElementById('contract-pre-used-hours').value = contract.preUsedHours || 0;
             document.querySelector(`input[name="contract-cooperation"][value="${contract.cooperationMethod}"]`).checked = true;
             document.querySelector(`input[name="contract-type"][value="${contract.contractType}"]`).checked = true;
             document.getElementById('contract-notes').value = contract.notes;
@@ -1680,8 +1691,9 @@
                 option.value = contract.id;
                 const usedHours = calculateUsedHours(contract.id);
                 const bonusHours = contract.bonusHours || 0;
+                const preUsedHours = contract.preUsedHours || 0;
                 const totalAvailableHours = contract.totalHours + bonusHours;
-                const remainingHours = totalAvailableHours - usedHours;
+                const remainingHours = totalAvailableHours - preUsedHours - usedHours;
                 option.textContent = `${client.clientName} (可用 ${totalAvailableHours}h, 剩餘 ${remainingHours}h)`;
                 contractSelect.appendChild(option);
             });
@@ -1706,8 +1718,9 @@
                 const client = store.getClient(contract.clientId);
                 const usedHours = calculateUsedHours(contract.id);
                 const bonusHours = contract.bonusHours || 0;
+                const preUsedHours = contract.preUsedHours || 0;
                 const totalAvailableHours = contract.totalHours + bonusHours;
-                const remainingHours = totalAvailableHours - usedHours;
+                const remainingHours = totalAvailableHours - preUsedHours - usedHours;
 
                 document.getElementById('booking-client-name').textContent = client.clientName;
                 document.getElementById('booking-address').textContent = client.address;
@@ -1729,8 +1742,9 @@
             const client = store.getClient(contract.clientId);
             const usedHours = calculateUsedHours(contract.id);
             const bonusHours = contract.bonusHours || 0;
+            const preUsedHours = contract.preUsedHours || 0;
             const totalAvailableHours = contract.totalHours + bonusHours;
-            const remainingHours = totalAvailableHours - usedHours;
+            const remainingHours = totalAvailableHours - preUsedHours - usedHours;
 
             document.getElementById('booking-form').reset();
             document.getElementById('booking-modal-title').textContent = '新增預約';
@@ -1769,12 +1783,13 @@
             const contract = store.getContract(contractId);
             const usedHours = calculateUsedHours(contractId);
             const bonusHours = contract.bonusHours || 0;
+            const preUsedHours = contract.preUsedHours || 0;
             const totalAvailableHours = contract.totalHours + bonusHours;
-            const remainingHours = totalAvailableHours - usedHours;
+            const remainingHours = totalAvailableHours - preUsedHours - usedHours;
             const serviceHours = parseFloat(document.getElementById('booking-hours').value);
 
             if (serviceHours > remainingHours) {
-                alert(`❌ 服務時數不能超過剩餘時數 (${remainingHours} 小時)\n合約時數: ${contract.totalHours}h + 贈送: ${bonusHours}h`);
+                alert(`❌ 服務時數不能超過剩餘時數 (${remainingHours} 小時)\n合約時數: ${contract.totalHours}h + 贈送: ${bonusHours}h${preUsedHours > 0 ? ' - 他人已服務: ' + preUsedHours + 'h' : ''}`);
                 return;
             }
 
@@ -1819,8 +1834,9 @@
             const client = store.getClient(contract.clientId);
             const usedHours = calculateUsedHours(contract.id);
             const bonusHours = contract.bonusHours || 0;
+            const preUsedHours = contract.preUsedHours || 0;
             const totalAvailableHours = contract.totalHours + bonusHours;
-            const remainingHours = totalAvailableHours - usedHours;
+            const remainingHours = totalAvailableHours - preUsedHours - usedHours;
 
             document.getElementById('booking-modal-title').textContent = '編輯預約';
             document.getElementById('booking-modal').dataset.bookingId = bookingId;
