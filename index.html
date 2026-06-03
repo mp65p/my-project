@@ -389,8 +389,16 @@
             <p>CRM + 預約 + 收款 - 完整解決方案</p>
         </div>
 
+        <!-- 頂部服務切換列 -->
+        <div id="service-switch-bar" style="display:none; background:#2c3e50; padding:8px 20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span style="color:#ecf0f1; font-size:13px;">目前服務：</span>
+            <select id="quick-service-switch" style="padding:5px 10px; border-radius:4px; border:none; font-size:13px; background:white;">
+                <option value="">-- 選擇服務類型 --</option>
+            </select>
+        </div>
+
         <div class="nav-tabs">
-            <button class="nav-btn active" data-tab="step1">Step1: 開始</button>
+            <button class="nav-btn active" data-tab="step1">⚙️ 系統設定</button>
             <button class="nav-btn" data-tab="clients">客戶管理</button>
             <button class="nav-btn" data-tab="contracts">合約管理</button>
             <button class="nav-btn" data-tab="bookings">預約管理</button>
@@ -399,32 +407,42 @@
         </div>
 
         <div class="content">
-            <!-- Step 1: 選擇業者與服務類型 -->
+            <!-- 系統設定 -->
             <div id="step1" class="tab-pane active">
-                <h2>Step 1: 選擇業者與服務類型</h2>
-                <p style="margin-bottom: 20px; color: #7f8c8d;">選擇後無法更改，將決定後續動態欄位</p>
-                
+                <h2>⚙️ 系統設定</h2>
+
+                <!-- 業者名稱 -->
                 <div class="form-group">
-                    <label for="provider-select">選擇業者 *</label>
-                    <select id="provider-select">
-                        <option value="">-- 請選擇業者 --</option>
-                    </select>
+                    <label for="provider-name-input">業者名稱</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="provider-name-input" placeholder="輸入業者名稱..." style="flex:1; padding:8px 10px; border:1px solid #bdc3c7; border-radius:4px;">
+                        <button class="btn btn-primary" onclick="saveProviderName()">儲存</button>
+                    </div>
+                    <p id="current-provider-name" style="margin-top:6px; font-size:13px; color:#27ae60;"></p>
                 </div>
 
-                <div class="form-group">
-                    <label for="service-type-select">選擇服務類型 *</label>
-                    <select id="service-type-select">
-                        <option value="">-- 請先選擇業者 --</option>
-                    </select>
+                <!-- 服務類型管理 -->
+                <div class="form-group" style="margin-top:20px;">
+                    <label>服務類型管理</label>
+                    <div id="service-types-list" style="margin-bottom:10px;"></div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <input type="text" id="new-service-type-input" placeholder="新增服務類型名稱..." style="flex:1; min-width:150px; padding:8px 10px; border:1px solid #bdc3c7; border-radius:4px;">
+                        <button class="btn btn-primary" onclick="addServiceType()">+ 新增</button>
+                    </div>
                 </div>
 
-                <div id="selected-info" style="display:none;" class="info-box">
-                    <p><strong>已選擇：</strong></p>
-                    <p>業者: <span id="selected-provider"></span></p>
-                    <p>服務類型: <span id="selected-service-type"></span></p>
+                <!-- 資料備份 -->
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ecf0f1;">
+                    <p style="font-size: 13px; color: #7f8c8d; margin-bottom: 10px;">📦 資料備份</p>
+                    <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-secondary" onclick="exportData()">📥 匯出備份</button>
+                        <label class="btn btn-secondary" style="cursor:pointer; margin:0;">
+                            📤 匯入還原
+                            <input type="file" id="import-file" accept=".json" style="display:none;">
+                        </label>
+                    </div>
+                    <p style="font-size: 11px; color: #95a5a6; margin-top: 8px;">⚠️ 匯入會覆蓋現有資料，請先匯出備份</p>
                 </div>
-
-                <button id="confirm-selection" class="btn btn-success" style="display:none;">確認進入系統</button>
             </div>
 
             <!-- 客戶管理 -->
@@ -433,7 +451,7 @@
                 <p style="margin-bottom: 15px; color: #7f8c8d;">⚠️ 客戶頁面不顯示任何價格欄位</p>
 
                 <div id="client-warning" class="alert alert-warning" style="display:none;">
-                    請先在 <strong>Step 1</strong> 中選擇業者與服務類型
+                    請先在 <strong>⚙️ 系統設定</strong> 中設定服務類型
                 </div>
 
                 <div style="display:flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
@@ -452,23 +470,18 @@
             <!-- 合約管理 -->
             <div id="contracts" class="tab-pane">
                 <h2>合約管理</h2>
-                <p style="margin-bottom: 15px; color: #7f8c8d;">選擇客戶後建立合約，合作方式決定單價</p>
 
                 <div id="contract-warning" class="alert alert-warning" style="display:none;">
-                    請先在 <strong>Step 1</strong> 中選擇業者與服務類型，並建立至少一個客戶
+                    請先在 <strong>⚙️ 系統設定</strong> 中設定服務類型，並建立至少一個客戶
                 </div>
 
-                <div id="contract-client-select" style="display:none; margin-bottom: 15px;">
-                    <div class="form-group">
-                        <label for="contract-client">選擇客戶</label>
-                        <select id="contract-client">
-                            <option value="">-- 請選擇客戶 --</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div style="display:flex; gap: 10px; margin-bottom: 15px;">
-                    <input type="text" id="contract-search" placeholder="🔍 搜尋客戶姓名..." style="flex: 1; padding: 8px 10px; border: 1px solid #bdc3c7; border-radius: 4px;">
+                <div style="display:flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <input type="text" id="contract-search" placeholder="🔍 搜尋客戶姓名..." style="flex: 1; min-width: 150px; padding: 8px 10px; border: 1px solid #bdc3c7; border-radius: 4px;">
+                    <select id="contract-status-filter" style="padding: 8px 10px; border: 1px solid #bdc3c7; border-radius: 4px;">
+                        <option value="進行中">進行中</option>
+                        <option value="已結束">已結束</option>
+                        <option value="">全部</option>
+                    </select>
                     <button id="add-contract-btn" class="btn btn-primary" style="display:none;">+ 新增合約</button>
                 </div>
 
@@ -478,28 +491,18 @@
             <!-- 預約管理 -->
             <div id="bookings" class="tab-pane">
                 <h2>預約管理</h2>
-                <p style="margin-bottom: 15px; color: #7f8c8d;">選擇合約後建立預約，系統自動驗證時數</p>
 
                 <div id="booking-warning" class="alert alert-warning" style="display:none;">
                     請先建立至少一個合約
                 </div>
 
-                <div id="booking-contract-select" style="display:none; margin-bottom: 15px;">
-                    <div class="form-group">
-                        <label for="booking-contract">選擇合約</label>
-                        <select id="booking-contract">
-                            <option value="">-- 請選擇合約 --</option>
-                        </select>
-                    </div>
-                    <div id="booking-contract-info" style="display:none;" class="info-box">
-                        <p>客戶: <span id="booking-client-name"></span></p>
-                        <p>地址: <span id="booking-address"></span></p>
-                        <p>剩餘時數: <span id="booking-remaining-hours">0</span> 小時</p>
-                    </div>
-                </div>
-
-                <div style="display:flex; gap: 10px; margin-bottom: 15px;">
-                    <input type="text" id="booking-search" placeholder="🔍 搜尋客戶姓名..." style="flex: 1; padding: 8px 10px; border: 1px solid #bdc3c7; border-radius: 4px;">
+                <div style="display:flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <input type="text" id="booking-search" placeholder="🔍 搜尋客戶姓名..." style="flex: 1; min-width: 150px; padding: 8px 10px; border: 1px solid #bdc3c7; border-radius: 4px;">
+                    <select id="booking-status-filter" style="padding: 8px 10px; border: 1px solid #bdc3c7; border-radius: 4px;">
+                        <option value="未開始">未完成</option>
+                        <option value="完成">已完成</option>
+                        <option value="">全部</option>
+                    </select>
                     <button id="add-booking-btn" class="btn btn-primary" style="display:none;">+ 新增預約</button>
                 </div>
 
@@ -517,6 +520,11 @@
 
                 <div style="display:flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
                     <input type="text" id="payment-search" placeholder="🔍 搜尋客戶姓名..." style="flex: 1; min-width: 150px; padding: 8px 10px; border: 1px solid #bdc3c7; border-radius: 4px;">
+                    <select id="payment-status-filter" style="padding: 8px 10px; border: 1px solid #bdc3c7; border-radius: 4px;">
+                        <option value="未收">未收款</option>
+                        <option value="已收">已收款</option>
+                        <option value="">全部</option>
+                    </select>
                 </div>
 
                 <div id="payments-list" style="margin-top: 20px;"></div>
@@ -534,6 +542,7 @@
                         <option value="">全部月份</option>
                     </select>
                 </div>
+
                 <div id="dashboard-content"></div>
             </div>
         </div>
@@ -613,6 +622,14 @@
                 <h3 id="contract-modal-title">新增合約</h3>
             </div>
             <form id="contract-form">
+                <div class="form-group" id="contract-client-search-group">
+                    <label>選擇客戶 *</label>
+                    <input type="text" id="contract-client-search-input" placeholder="輸入客戶姓名或電話..." style="width:100%;padding:8px 10px;border:1px solid #bdc3c7;border-radius:4px;margin-bottom:4px;" autocomplete="off">
+                    <div id="contract-client-dropdown" style="border:1px solid #bdc3c7;border-radius:4px;max-height:150px;overflow-y:auto;display:none;background:white;margin-bottom:6px;"></div>
+                    <input type="hidden" id="contract-client-id-hidden">
+                    <div id="contract-client-selected-info" style="display:none;padding:8px;background:#e3f2fd;border-radius:4px;font-size:13px;margin-bottom:6px;"></div>
+                </div>
+
                 <div id="contract-client-info" style="display:none;" class="info-box">
                     <p>客戶: <span id="contract-client-name"></span></p>
                     <p>地址: <span id="contract-client-address"></span></p>
@@ -632,7 +649,7 @@
                 <div class="form-group">
                     <label for="contract-pre-used-hours">他人已服務時數</label>
                     <input type="number" id="contract-pre-used-hours" min="0" step="0.5" value="0">
-                    <small style="color: #7f8c8d;">⚠️ 接手前他人已使用的時數，用於計算剩餘可用時數</small>
+                    <small style="color: #7f8c8d;">接手前他人已使用的時數</small>
                 </div>
 
                 <div class="form-group">
@@ -645,12 +662,19 @@
 
                 <div id="contract-rate-group" style="display:none;" class="form-group">
                     <label for="contract-hourly-rate">合約單價（元/小時）*</label>
-                    <input type="number" id="contract-hourly-rate" min="100" step="50">
+                    <input type="number" id="contract-hourly-rate" min="0" step="50">
                 </div>
 
                 <div id="contract-rate-fixed" style="display:none;" class="form-group">
-                    <label>合約單價（元/小時）</label>
-                    <input type="text" value="600（系統設定）" readonly class="readonly">
+                    <label for="contract-hourly-rate-company">合約單價（元/小時）*</label>
+                    <input type="number" id="contract-hourly-rate-company" min="0" step="50">
+                    <small style="color: #7f8c8d;">客戶付給公司的費用，供記錄用</small>
+                </div>
+
+                <div id="contract-payment-rate-group" style="display:none;" class="form-group">
+                    <label for="contract-payment-rate">我方收款費率（元/小時）</label>
+                    <input type="number" id="contract-payment-rate" min="0" step="50" value="600">
+                    <small style="color: #7f8c8d;">計算收款時使用，預設 600</small>
                 </div>
 
                 <div class="form-group">
@@ -658,6 +682,14 @@
                     <div class="radio-group">
                         <label><input type="radio" name="contract-type" value="首次合約" required> 首次合約</label>
                         <label><input type="radio" name="contract-type" value="續約"> 續約</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>合約狀態</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="contract-status" value="進行中" checked> 進行中</label>
+                        <label><input type="radio" name="contract-status" value="已結束"> 已結束</label>
                     </div>
                 </div>
 
@@ -695,6 +727,14 @@
                 <h3 id="booking-modal-title">新增預約</h3>
             </div>
             <form id="booking-form">
+                <div class="form-group" id="booking-client-search-group">
+                    <label>選擇客戶 *</label>
+                    <input type="text" id="booking-client-search-input" placeholder="輸入客戶姓名或電話..." style="width:100%;padding:8px 10px;border:1px solid #bdc3c7;border-radius:4px;margin-bottom:4px;" autocomplete="off">
+                    <div id="booking-client-dropdown" style="border:1px solid #bdc3c7;border-radius:4px;max-height:150px;overflow-y:auto;display:none;background:white;margin-bottom:6px;"></div>
+                    <input type="hidden" id="booking-client-id-hidden">
+                    <div id="booking-client-selected-info" style="display:none;padding:8px;background:#e3f2fd;border-radius:4px;font-size:13px;margin-bottom:6px;"></div>
+                </div>
+
                 <div id="booking-info-display" style="display:none;" class="info-box">
                     <p>客戶: <span id="booking-info-client"></span></p>
                     <p>住家: <span id="booking-info-home"></span></p>
@@ -848,26 +888,28 @@
                 let data = localStorage.getItem('servicecrm_data');
                 if (!data) {
                     this.data = {
-                        providers: [
-                            { id: 'p1', name: '除塵蟎服務商' },
-                            { id: 'p2', name: '居家清潔服務商' },
-                            { id: 'p3', name: '維修服務商' }
-                        ],
-                        serviceTypes: [
-                            { id: 'st1', providerId: 'p1', typeName: '除塵蟎', dynamicFields: ['rooms', 'hasChildren', 'hasPets'] },
-                            { id: 'st2', providerId: 'p2', typeName: '居家清潔', dynamicFields: ['rooms', 'hasChildren', 'hasPets'] },
-                            { id: 'st3', providerId: 'p3', typeName: '維修', dynamicFields: ['applianceName', 'warrantyStatus'] }
-                        ],
+                        providerName: '',
+                        serviceTypes: [],
                         clients: [],
                         contracts: [],
                         bookings: [],
                         payments: [],
-                        selectedProvider: null,
                         selectedServiceType: null
                     };
                     this.save();
                 } else {
                     this.data = JSON.parse(data);
+                    // 相容舊資料：如果有 providers 舊欄位但沒有 providerName
+                    if (!this.data.providerName && this.data.providers && this.data.providers[0]) {
+                        this.data.providerName = this.data.providers[0].name || '';
+                    }
+                    if (!this.data.providerName) this.data.providerName = '';
+                    if (!this.data.serviceTypes) this.data.serviceTypes = [];
+                    // selectedServiceType 若已不存在就清除
+                    if (this.data.selectedServiceType) {
+                        const exists = this.data.serviceTypes.find(st => st.id === this.data.selectedServiceType);
+                        if (!exists) this.data.selectedServiceType = this.data.serviceTypes[0]?.id || null;
+                    }
                 }
             }
 
@@ -875,14 +917,28 @@
                 localStorage.setItem('servicecrm_data', JSON.stringify(this.data));
             }
 
-            // Provider
-            getProviders() {
-                return this.data.providers;
+            addServiceType(typeName) {
+                const id = 'st_' + Date.now();
+                this.data.serviceTypes.push({ id, typeName });
+                if (!this.data.selectedServiceType) this.data.selectedServiceType = id;
+                this.save();
+                return id;
+            }
+
+            deleteServiceType(typeId) {
+                const hasClients = this.data.clients.some(c => c.serviceTypeId === typeId);
+                if (hasClients) return false;
+                this.data.serviceTypes = this.data.serviceTypes.filter(st => st.id !== typeId);
+                if (this.data.selectedServiceType === typeId) {
+                    this.data.selectedServiceType = this.data.serviceTypes[0]?.id || null;
+                }
+                this.save();
+                return true;
             }
 
             // ServiceType
-            getServiceTypesByProvider(providerId) {
-                return this.data.serviceTypes.filter(st => st.providerId === providerId);
+            getServiceTypes() {
+                return this.data.serviceTypes || [];
             }
 
             getServiceType(serviceTypeId) {
@@ -911,7 +967,9 @@
             addContract(contract) {
                 contract.id = 'cont_' + Date.now();
                 contract.createdAt = new Date().toISOString();
-                contract.bonusHours = contract.bonusHours || 0; // 新增贈送時數
+                contract.bonusHours = contract.bonusHours || 0;
+                contract.preUsedHours = contract.preUsedHours || 0;
+                contract.contractStatus = contract.contractStatus || '進行中';
                 this.data.contracts.push(contract);
                 this.save();
                 return contract;
@@ -931,6 +989,21 @@
 
             getContract(contractId) {
                 return this.data.contracts.find(c => c.id === contractId);
+            }
+
+            getLatestActiveContract(clientId) {
+                const usedFn = (contractId) => {
+                    return this.getBookingsByContract(contractId)
+                        .filter(b => b.status === '完成')
+                        .reduce((sum, b) => sum + b.serviceHours, 0);
+                };
+                const active = this.getContractsByClient(clientId).filter(c => {
+                    const preUsed = c.preUsedHours || 0;
+                    const bonus = c.bonusHours || 0;
+                    const remaining = c.totalHours + bonus - preUsed - usedFn(c.id);
+                    return (c.contractStatus || '進行中') === '進行中' && remaining > 0;
+                });
+                return active.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0] || null;
             }
 
             // Booking
@@ -1020,67 +1093,108 @@
             });
         });
 
-        // ==================== Step 1: 選擇業者與服務類型 ====================
+        // ==================== 系統設定 ====================
         function initStep1() {
-            const providerSelect = document.getElementById('provider-select');
-            const serviceTypeSelect = document.getElementById('service-type-select');
+            renderSettingsPage();
+            initQuickServiceSwitch();
+        }
 
-            store.getProviders().forEach(provider => {
-                const option = document.createElement('option');
-                option.value = provider.id;
-                option.textContent = provider.name;
-                providerSelect.appendChild(option);
-            });
+        function renderSettingsPage() {
+            // 業者名稱
+            const name = store.data.providerName || '';
+            document.getElementById('provider-name-input').value = name;
+            document.getElementById('current-provider-name').textContent = name ? `目前：${name}` : '';
 
-            providerSelect.addEventListener('change', function() {
-                serviceTypeSelect.innerHTML = '<option value="">-- 請選擇服務類型 --</option>';
-                if (this.value) {
-                    store.getServiceTypesByProvider(this.value).forEach(st => {
-                        const option = document.createElement('option');
-                        option.value = st.id;
-                        option.textContent = st.typeName;
-                        serviceTypeSelect.appendChild(option);
-                    });
-                }
-                updateStep1Confirmation();
-            });
+            // 服務類型清單
+            const list = document.getElementById('service-types-list');
+            const types = store.getServiceTypes();
+            if (types.length === 0) {
+                list.innerHTML = '<p style="color:#95a5a6;font-size:13px;">尚未新增服務類型</p>';
+            } else {
+                list.innerHTML = types.map(st => {
+                    const isActive = store.data.selectedServiceType === st.id;
+                    return `
+                        <div style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid ${isActive ? '#27ae60' : '#ecf0f1'};border-radius:6px;margin-bottom:6px;background:${isActive ? '#e8f5e9' : 'white'};">
+                            <span style="flex:1;font-weight:${isActive ? 'bold' : 'normal'};">
+                                ${st.typeName}${isActive ? ' ✅ 目前使用' : ''}
+                            </span>
+                            ${!isActive ? `<button class="btn btn-sm btn-secondary" onclick="switchServiceType('${st.id}')">切換</button>` : ''}
+                            <button class="btn btn-sm btn-danger" onclick="deleteServiceType('${st.id}','${st.typeName}')">刪除</button>
+                        </div>`;
+                }).join('');
+            }
 
-            serviceTypeSelect.addEventListener('change', updateStep1Confirmation);
+            // 頂部切換列
+            initQuickServiceSwitch();
+        }
 
-            document.getElementById('confirm-selection').addEventListener('click', function() {
-                const providerId = providerSelect.value;
-                const serviceTypeId = serviceTypeSelect.value;
+        function saveProviderName() {
+            const name = document.getElementById('provider-name-input').value.trim();
+            if (!name) { showToast('請輸入業者名稱'); return; }
+            store.data.providerName = name;
+            store.save();
+            document.getElementById('current-provider-name').textContent = `目前：${name}`;
+            showToast('✅ 業者名稱已儲存');
+        }
 
-                if (providerId && serviceTypeId) {
-                    store.data.selectedProvider = providerId;
-                    store.data.selectedServiceType = serviceTypeId;
-                    store.save();
+        function addServiceType() {
+            const input = document.getElementById('new-service-type-input');
+            const typeName = input.value.trim();
+            if (!typeName) { showToast('請輸入服務類型名稱'); return; }
+            const exists = store.getServiceTypes().some(st => st.typeName === typeName);
+            if (exists) { showToast('此服務類型已存在'); return; }
+            store.addServiceType(typeName);
+            input.value = '';
+            renderSettingsPage();
+            updateAllTabs();
+        }
 
-                    updateAllTabs();
-                    setActiveTab('clients');
-
-                    alert('✅ 業者與服務類型已確認，現在可以建立客戶');
-                }
+        function deleteServiceType(typeId, typeName) {
+            const hasClients = store.data.clients.some(c => c.serviceTypeId === typeId);
+            if (hasClients) {
+                showToast(`❌ 「${typeName}」還有客戶資料，無法刪除`);
+                return;
+            }
+            showConfirm(`確定刪除「${typeName}」服務類型嗎？`, () => {
+                store.deleteServiceType(typeId);
+                renderSettingsPage();
+                updateAllTabs();
+                showToast(`✅ 已刪除「${typeName}」`);
             });
         }
 
-        function updateStep1Confirmation() {
-            const providerId = document.getElementById('provider-select').value;
-            const serviceTypeId = document.getElementById('service-type-select').value;
-            const selectedInfo = document.getElementById('selected-info');
-            const confirmBtn = document.getElementById('confirm-selection');
+        function switchServiceType(typeId) {
+            store.data.selectedServiceType = typeId;
+            store.save();
+            renderSettingsPage();
+            updateAllTabs();
+        }
 
-            if (providerId && serviceTypeId) {
-                const provider = store.getProviders().find(p => p.id === providerId);
-                const st = store.getServiceType(serviceTypeId);
-                document.getElementById('selected-provider').textContent = provider.name;
-                document.getElementById('selected-service-type').textContent = st.typeName;
-                selectedInfo.style.display = 'block';
-                confirmBtn.style.display = 'block';
-            } else {
-                selectedInfo.style.display = 'none';
-                confirmBtn.style.display = 'none';
+        function initQuickServiceSwitch() {
+            const bar = document.getElementById('service-switch-bar');
+            const sel = document.getElementById('quick-service-switch');
+            const types = store.getServiceTypes();
+
+            if (types.length === 0) {
+                bar.style.display = 'none';
+                return;
             }
+
+            bar.style.display = 'flex';
+            sel.innerHTML = types.map(st =>
+                `<option value="${st.id}" ${store.data.selectedServiceType === st.id ? 'selected' : ''}>${st.typeName}</option>`
+            ).join('');
+
+            // 避免重複綁定
+            const newSel = sel.cloneNode(true);
+            sel.parentNode.replaceChild(newSel, sel);
+            newSel.value = store.data.selectedServiceType || '';
+            newSel.addEventListener('change', function() {
+                store.data.selectedServiceType = this.value;
+                store.save();
+                renderSettingsPage();
+                updateAllTabs();
+            });
         }
 
         // ==================== 客戶管理 ====================
@@ -1175,68 +1289,25 @@
 
         function renderDynamicFields() {
             const container = document.getElementById('client-dynamic-fields');
-            container.innerHTML = '';
-
-            if (!store.data.selectedServiceType) return;
-
-            const st = store.getServiceType(store.data.selectedServiceType);
-            const fields = st.dynamicFields || [];
-
-            let html = '<h3 style="margin-top: 20px; margin-bottom: 15px;">動態欄位</h3>';
-
-            if (fields.includes('rooms')) {
-                html += `
-                    <div class="form-group">
-                        <label for="client-rooms">房間數 *</label>
-                        <input type="number" id="client-rooms" min="1" step="1" required>
+            container.innerHTML = `
+                <h3 style="margin-top: 20px; margin-bottom: 15px;">附加資訊</h3>
+                <div class="form-group">
+                    <label for="client-rooms">房間數</label>
+                    <input type="number" id="client-rooms" min="1" step="1">
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="client-has-children" value="true">
+                        <label for="client-has-children">是否有小孩</label>
                     </div>
-                `;
-            }
-
-            if (fields.includes('hasChildren')) {
-                html += `
-                    <div class="form-group">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="client-has-children" value="true">
-                            <label for="client-has-children">是否有小孩</label>
-                        </div>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="client-has-pets" value="true">
+                        <label for="client-has-pets">是否有寵物</label>
                     </div>
-                `;
-            }
-
-            if (fields.includes('hasPets')) {
-                html += `
-                    <div class="form-group">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="client-has-pets" value="true">
-                            <label for="client-has-pets">是否有寵物</label>
-                        </div>
-                    </div>
-                `;
-            }
-
-            if (fields.includes('applianceName')) {
-                html += `
-                    <div class="form-group">
-                        <label for="client-appliance-name">電器名稱 *</label>
-                        <input type="text" id="client-appliance-name" required>
-                    </div>
-                `;
-            }
-
-            if (fields.includes('warrantyStatus')) {
-                html += `
-                    <div class="form-group">
-                        <label>保固狀態 *</label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="client-warranty-status" value="保固內" required> 保固內</label>
-                            <label><input type="radio" name="client-warranty-status" value="保固外"> 保固外</label>
-                        </div>
-                    </div>
-                `;
-            }
-
-            container.innerHTML = html;
+                </div>
+            `;
         }
 
         function editClient(clientId) {
@@ -1286,7 +1357,7 @@
             try {
                 // 檢查是否選擇了服務類型
                 if (!store.data.selectedServiceType) {
-                    alert('❌ 錯誤：請先在 Step 1 選擇服務類型');
+                    showToast('❌ 錯誤：請先在 Step 1 選擇服務類型');
                     return;
                 }
 
@@ -1302,23 +1373,23 @@
                 const homeType = document.querySelector('input[name="client-home-type"]:checked');
 
                 if (!clientName) {
-                    alert('❌ 請填寫客戶姓名');
+                    showToast('❌ 請填寫客戶姓名');
                     return;
                 }
                 if (!phone) {
-                    alert('❌ 請填寫聯絡電話');
+                    showToast('❌ 請填寫聯絡電話');
                     return;
                 }
                 if (!clientSource) {
-                    alert('❌ 請選擇客戶來源');
+                    showToast('❌ 請選擇客戶來源');
                     return;
                 }
                 if (!homeType) {
-                    alert('❌ 請選擇住家類型');
+                    showToast('❌ 請選擇住家類型');
                     return;
                 }
                 if (!address) {
-                    alert('❌ 請填寫服務地址');
+                    showToast('❌ 請填寫服務地址');
                     return;
                 }
 
@@ -1326,7 +1397,7 @@
                 if (fields.includes('rooms')) {
                     const rooms = document.getElementById('client-rooms').value;
                     if (!rooms || rooms < 1) {
-                        alert('❌ 請填寫房間數');
+                        showToast('❌ 請填寫房間數');
                         return;
                     }
                 }
@@ -1334,7 +1405,7 @@
                 if (fields.includes('applianceName')) {
                     const applianceName = document.getElementById('client-appliance-name').value.trim();
                     if (!applianceName) {
-                        alert('❌ 請填寫電器名稱');
+                        showToast('❌ 請填寫電器名稱');
                         return;
                     }
                 }
@@ -1342,7 +1413,7 @@
                 if (fields.includes('warrantyStatus')) {
                     const warrantyStatus = document.querySelector('input[name="client-warranty-status"]:checked');
                     if (!warrantyStatus) {
-                        alert('❌ 請選擇保固狀態');
+                        showToast('❌ 請選擇保固狀態');
                         return;
                     }
                 }
@@ -1380,18 +1451,18 @@
                     const existingClient = store.getClient(clientId);
                     Object.assign(existingClient, client);
                     store.save();
-                    alert('✅ 客戶已更新');
+                    showToast('✅ 客戶已更新');
                 } else {
                     // 新增
                     store.addClient(client);
-                    alert('✅ 客戶已建立');
+                    showToast('✅ 客戶已建立');
                 }
 
                 closeClientModal();
                 updateAllTabs();
             } catch (error) {
                 console.error('客戶建立錯誤:', error);
-                alert('❌ 發生錯誤：' + error.message);
+                showToast('❌ 發生錯誤：' + error.message);
             }
         });
 
@@ -1401,21 +1472,36 @@
         function renderContracts() {
             const contractsList = document.getElementById('contracts-list');
             const searchValue = document.getElementById('contract-search') ? document.getElementById('contract-search').value.toLowerCase() : '';
+            const statusFilter = document.getElementById('contract-status-filter') ? document.getElementById('contract-status-filter').value : '進行中';
             let contracts = store.getContracts();
 
             // 排序：最新在最上方
             contracts = contracts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-            // 搜索過濾：按客戶姓名
+            // 自動判斷已結束（剩餘時數=0）
+            contracts.forEach(contract => {
+                const usedHours = calculateUsedHours(contract.id);
+                const bonusHours = contract.bonusHours || 0;
+                const preUsedHours = contract.preUsedHours || 0;
+                const remaining = contract.totalHours + bonusHours - preUsedHours - usedHours;
+                if (remaining <= 0 && (contract.contractStatus || '進行中') === '進行中') {
+                    contract.contractStatus = '已結束';
+                    store.save();
+                }
+            });
+
+            // 狀態過濾（有搜尋時顯示全部）
             if (searchValue) {
                 contracts = contracts.filter(c => {
                     const client = store.getClient(c.clientId);
                     return client && client.clientName.toLowerCase().includes(searchValue);
                 });
+            } else if (statusFilter) {
+                contracts = contracts.filter(c => (c.contractStatus || '進行中') === statusFilter);
             }
 
             if (contracts.length === 0) {
-                contractsList.innerHTML = '<div class="empty-state">尚無合約' + (searchValue ? '（搜尋無結果）' : '，請先建立客戶並點擊「+ 新增合約」') + '</div>';
+                contractsList.innerHTML = '<div class="empty-state">尚無合約' + (searchValue ? '（搜尋無結果）' : '，點擊「+ 新增合約」開始建立') + '</div>';
             } else {
                 contractsList.innerHTML = contracts.map(contract => {
                     const client = store.getClient(contract.clientId);
@@ -1423,23 +1509,26 @@
                     const usedHours = calculateUsedHours(contract.id);
                     const bonusHours = contract.bonusHours || 0;
                     const preUsedHours = contract.preUsedHours || 0;
-                    const totalAvailableHours = contract.totalHours + bonusHours;
-                    const remainingHours = totalAvailableHours - preUsedHours - usedHours;
+                    const remainingHours = contract.totalHours + bonusHours - preUsedHours - usedHours;
                     const expandId = `contract-expand-${contract.id}`;
-                    const isEnded = remainingHours <= 0;
-                    const isWarning = remainingHours > 0 && remainingHours < 3;
+                    const contractStatus = contract.contractStatus || '進行中';
+                    const isEnded = contractStatus === '已結束';
+                    const isWarning = !isEnded && remainingHours > 0 && remainingHours < 3;
                     const alertIcon = isWarning ? ' 🔴' : '';
-                    const endedBadge = isEnded ? '<span style="background:#ecf0f1;color:#7f8c8d;padding:2px 6px;border-radius:10px;font-size:11px;margin-left:6px;">已結束</span>' : '';
+                    const statusBadge = isEnded
+                        ? '<span style="background:#ecf0f1;color:#7f8c8d;padding:2px 6px;border-radius:10px;font-size:11px;margin-left:6px;">已結束</span>'
+                        : '<span style="background:#e8f5e9;color:#27ae60;padding:2px 6px;border-radius:10px;font-size:11px;margin-left:6px;">進行中</span>';
                     const itemStyle = isEnded ? 'opacity:0.55;' : '';
                     const remainingStyle = isWarning ? 'color:#e74c3c;font-weight:bold;' : isEnded ? 'color:#95a5a6;' : '';
                     const preUsedNote = preUsedHours > 0 ? ` | 他人已服務: ${preUsedHours}h` : '';
+                    const paymentRate = contract.cooperationMethod === '公司派' ? (contract.paymentRate || 600) : contract.hourlyRate;
 
                     return `
                         <div class="list-item" style="${itemStyle}">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div style="flex: 1;">
-                                    <h4>${client.clientName}${alertIcon}${endedBadge}</h4>
-                                    <p>時數: ${contract.totalHours}h + 贈送 ${bonusHours}h | 單價: ${contract.hourlyRate} 元/h</p>
+                                    <h4>${client.clientName}${alertIcon}${statusBadge}</h4>
+                                    <p>時數: ${contract.totalHours}h + 贈送 ${bonusHours}h | 單價: ${contract.hourlyRate} 元/h${contract.cooperationMethod === '公司派' ? ` | 收款費率: ${paymentRate} 元/h` : ''}</p>
                                     <p>我方使用: ${usedHours}h${preUsedNote} | 剩餘: <strong style="${remainingStyle}">${remainingHours}h</strong></p>
                                 </div>
                                 <button class="btn btn-sm btn-secondary" style="margin-left: 10px;" onclick="toggleExpand('${expandId}')">展開</button>
@@ -1451,6 +1540,7 @@
                                 ${contract.notes ? `<p><strong>備註:</strong> ${contract.notes}` : ''}
                                 <div class="list-item-actions" style="margin-top: 10px;">
                                     ${!isEnded ? `<button class="btn btn-sm btn-secondary" onclick="editContract('${contract.id}')">編輯</button>` : ''}
+                                    ${!isEnded ? `<button class="btn btn-sm btn-secondary" onclick="terminateContract('${contract.id}')">終止</button>` : ''}
                                     <button class="btn btn-sm btn-danger" onclick="deleteContract('${contract.id}', '${client.clientName}')">刪除</button>
                                 </div>
                             </div>
@@ -1458,54 +1548,73 @@
                     `;
                 }).join('');
             }
-
-            updateContractClientSelect();
         }
 
-        function updateContractClientSelect() {
-            const clientSelect = document.getElementById('contract-client');
-            const clients = store.getClients();
-
-            clientSelect.innerHTML = '<option value="">-- 請選擇客戶 --</option>';
-            clients.forEach(client => {
-                const option = document.createElement('option');
-                option.value = client.id;
-                option.textContent = client.clientName;
-                clientSelect.appendChild(option);
+        function terminateContract(contractId) {
+            showConfirm('確定要終止此合約嗎？狀態將改為「已結束」', () => {
+                const contract = store.getContract(contractId);
+                if (contract) { contract.contractStatus = '已結束'; store.save(); updateAllTabs(); showToast('✅ 合約已終止'); }
             });
         }
 
         function updateContractTab() {
             if (!store.data.selectedServiceType) {
                 document.getElementById('contract-warning').style.display = 'block';
-                document.getElementById('contract-client-select').style.display = 'none';
                 document.getElementById('add-contract-btn').style.display = 'none';
             } else {
                 document.getElementById('contract-warning').style.display = 'none';
-                document.getElementById('contract-client-select').style.display = 'block';
                 document.getElementById('add-contract-btn').style.display = 'block';
             }
             renderContracts();
         }
 
         function openContractModal() {
-            const selectedClientId = document.getElementById('contract-client').value;
-            if (!selectedClientId) {
-                alert('請先選擇客戶');
-                return;
-            }
-
-            const client = store.getClient(selectedClientId);
             document.getElementById('contract-form').reset();
             document.getElementById('contract-modal-title').textContent = '新增合約';
             document.getElementById('contract-modal').dataset.contractId = '';
-            document.getElementById('contract-modal').dataset.clientId = selectedClientId;
-
-            document.getElementById('contract-client-name').textContent = client.clientName;
-            document.getElementById('contract-client-address').textContent = client.address;
-            document.getElementById('contract-client-info').style.display = 'block';
-
+            document.getElementById('contract-modal').dataset.clientId = '';
+            document.getElementById('contract-client-info').style.display = 'none';
+            document.getElementById('contract-client-search-group').style.display = 'block';
+            document.getElementById('contract-client-search-input').value = '';
+            document.getElementById('contract-client-id-hidden').value = '';
+            document.getElementById('contract-client-selected-info').style.display = 'none';
+            document.getElementById('contract-client-dropdown').style.display = 'none';
+            document.getElementById('contract-rate-group').style.display = 'none';
+            document.getElementById('contract-rate-fixed').style.display = 'none';
+            document.getElementById('contract-payment-rate-group').style.display = 'none';
             document.getElementById('contract-modal').classList.add('show');
+            initContractClientSearch();
+        }
+
+        function initContractClientSearch() {
+            const input = document.getElementById('contract-client-search-input');
+            const dropdown = document.getElementById('contract-client-dropdown');
+            const newInput = input.cloneNode(true);
+            input.parentNode.replaceChild(newInput, input);
+            newInput.addEventListener('input', function() {
+                const val = this.value.toLowerCase();
+                if (!val) { dropdown.style.display = 'none'; return; }
+                const clients = store.getClients().filter(c =>
+                    c.clientName.toLowerCase().includes(val) || (c.phone && c.phone.includes(val))
+                );
+                dropdown.innerHTML = clients.length === 0
+                    ? '<div style="padding:10px;color:#7f8c8d;">無匹配客戶</div>'
+                    : clients.map(c => `
+                        <div style="padding:10px;border-bottom:1px solid #ecf0f1;cursor:pointer;" onclick="selectContractClient('${c.id}','${c.clientName.replace(/'/g,"\\'")}','${(c.address||'').replace(/'/g,"\\'")}')">
+                            <strong>${c.clientName}</strong> (${c.phone})<br>
+                            <small style="color:#7f8c8d;">${c.address || '未填寫地址'}</small>
+                        </div>`).join('');
+                dropdown.style.display = 'block';
+            });
+        }
+
+        function selectContractClient(clientId, clientName, address) {
+            document.getElementById('contract-client-id-hidden').value = clientId;
+            document.getElementById('contract-client-search-input').value = clientName;
+            document.getElementById('contract-client-dropdown').style.display = 'none';
+            document.getElementById('contract-client-selected-info').innerHTML = `✅ 已選擇：<strong>${clientName}</strong>`;
+            document.getElementById('contract-client-selected-info').style.display = 'block';
+            document.getElementById('contract-modal').dataset.clientId = clientId;
         }
 
         function closeContractModal() {
@@ -1516,16 +1625,16 @@
             radio.addEventListener('change', function() {
                 const rateGroup = document.getElementById('contract-rate-group');
                 const rateFixed = document.getElementById('contract-rate-fixed');
-                const rateInput = document.getElementById('contract-hourly-rate');
+                const paymentRateGroup = document.getElementById('contract-payment-rate-group');
 
                 if (this.value === '公司派') {
                     rateGroup.style.display = 'none';
                     rateFixed.style.display = 'block';
-                    rateInput.value = 600;
+                    paymentRateGroup.style.display = 'block';
                 } else {
                     rateGroup.style.display = 'block';
                     rateFixed.style.display = 'none';
-                    rateInput.value = '';
+                    paymentRateGroup.style.display = 'none';
                 }
                 updateContractTotalPrice();
             });
@@ -1533,6 +1642,7 @@
 
         document.getElementById('contract-total-hours').addEventListener('input', updateContractTotalPrice);
         document.getElementById('contract-hourly-rate').addEventListener('input', updateContractTotalPrice);
+        document.getElementById('contract-hourly-rate-company').addEventListener('input', updateContractTotalPrice);
 
         function autoFillExpireDate() {
             const signDate = document.getElementById('contract-sign-date').value;
@@ -1546,13 +1656,11 @@
             const hours = parseFloat(document.getElementById('contract-total-hours').value) || 0;
             const cooperation = document.querySelector('input[name="contract-cooperation"]:checked');
             let rate = 0;
-
             if (cooperation && cooperation.value === '公司派') {
-                rate = 600;
+                rate = parseFloat(document.getElementById('contract-hourly-rate-company').value) || 0;
             } else {
                 rate = parseFloat(document.getElementById('contract-hourly-rate').value) || 0;
             }
-
             const totalPrice = hours * rate;
             document.getElementById('contract-total-price-calc').textContent = `${hours} × ${rate} = NT$${totalPrice.toLocaleString()}`;
         }
@@ -1560,21 +1668,27 @@
         document.getElementById('contract-form').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            const clientId = document.getElementById('contract-modal').dataset.clientId;
+            const clientId = document.getElementById('contract-modal').dataset.clientId ||
+                             document.getElementById('contract-client-id-hidden').value;
+            if (!clientId) { showToast('請先選擇客戶'); return; }
+
             const contractId = document.getElementById('contract-modal').dataset.contractId;
             const cooperation = document.querySelector('input[name="contract-cooperation"]:checked').value;
             let hourlyRate = 0;
+            let paymentRate = 0;
 
             if (cooperation === '公司派') {
-                hourlyRate = 600;
+                hourlyRate = parseFloat(document.getElementById('contract-hourly-rate-company').value) || 0;
+                paymentRate = parseFloat(document.getElementById('contract-payment-rate').value) || 600;
             } else {
-                hourlyRate = parseFloat(document.getElementById('contract-hourly-rate').value);
+                hourlyRate = parseFloat(document.getElementById('contract-hourly-rate').value) || 0;
+                paymentRate = hourlyRate;
             }
 
             const totalHours = parseFloat(document.getElementById('contract-total-hours').value);
             const bonusHours = parseFloat(document.getElementById('contract-bonus-hours').value) || 0;
             const preUsedHours = parseFloat(document.getElementById('contract-pre-used-hours').value) || 0;
-            const totalPrice = hourlyRate * totalHours; // 金額只計算合約時數
+            const totalPrice = hourlyRate * totalHours;
 
             const contract = {
                 clientId: clientId,
@@ -1582,9 +1696,11 @@
                 bonusHours: bonusHours,
                 preUsedHours: preUsedHours,
                 hourlyRate: hourlyRate,
+                paymentRate: paymentRate,
                 totalPrice: totalPrice,
                 cooperationMethod: cooperation,
                 contractType: document.querySelector('input[name="contract-type"]:checked').value,
+                contractStatus: document.querySelector('input[name="contract-status"]:checked')?.value || '進行中',
                 signDate: document.getElementById('contract-sign-date').value,
                 expireDate: document.getElementById('contract-expire-date').value,
                 notes: document.getElementById('contract-notes').value
@@ -1610,28 +1726,36 @@
 
             document.getElementById('contract-modal-title').textContent = '編輯合約';
             document.getElementById('contract-modal').dataset.contractId = contractId;
+            document.getElementById('contract-modal').dataset.clientId = contract.clientId;
 
             const client = store.getClient(contract.clientId);
-            document.getElementById('contract-client-name').textContent = client.clientName;
-            document.getElementById('contract-client-address').textContent = client.address;
+            document.getElementById('contract-client-name').textContent = client ? client.clientName : '';
+            document.getElementById('contract-client-address').textContent = client ? client.address : '';
             document.getElementById('contract-client-info').style.display = 'block';
+            document.getElementById('contract-client-search-group').style.display = 'none';
 
             document.getElementById('contract-total-hours').value = contract.totalHours;
             document.getElementById('contract-bonus-hours').value = contract.bonusHours || 0;
             document.getElementById('contract-pre-used-hours').value = contract.preUsedHours || 0;
             document.querySelector(`input[name="contract-cooperation"][value="${contract.cooperationMethod}"]`).checked = true;
             document.querySelector(`input[name="contract-type"][value="${contract.contractType}"]`).checked = true;
-            document.getElementById('contract-notes').value = contract.notes || '';
+            const statusRadio = document.querySelector(`input[name="contract-status"][value="${contract.contractStatus || '進行中'}"]`);
+            if (statusRadio) statusRadio.checked = true;
             document.getElementById('contract-sign-date').value = contract.signDate || '';
             document.getElementById('contract-expire-date').value = contract.expireDate || '';
+            document.getElementById('contract-notes').value = contract.notes || '';
 
             if (contract.cooperationMethod === '自接') {
                 document.getElementById('contract-hourly-rate').value = contract.hourlyRate;
                 document.getElementById('contract-rate-group').style.display = 'block';
                 document.getElementById('contract-rate-fixed').style.display = 'none';
+                document.getElementById('contract-payment-rate-group').style.display = 'none';
             } else {
+                document.getElementById('contract-hourly-rate-company').value = contract.hourlyRate;
+                document.getElementById('contract-payment-rate').value = contract.paymentRate || 600;
                 document.getElementById('contract-rate-group').style.display = 'none';
                 document.getElementById('contract-rate-fixed').style.display = 'block';
+                document.getElementById('contract-payment-rate-group').style.display = 'block';
             }
 
             updateContractTotalPrice();
@@ -1648,12 +1772,13 @@
         function renderBookings() {
             const bookingsList = document.getElementById('bookings-list');
             const searchValue = document.getElementById('booking-search') ? document.getElementById('booking-search').value.toLowerCase() : '';
+            const statusFilter = document.getElementById('booking-status-filter') ? document.getElementById('booking-status-filter').value : '未開始';
             let bookings = store.getBookings();
 
-            // 排序：最新在最上方
-            bookings = bookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            // 排序：日期新→舊
+            bookings = bookings.sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate) || new Date(b.createdAt) - new Date(a.createdAt));
 
-            // 搜索過濾：按客戶姓名
+            // 搜索過濾
             if (searchValue) {
                 bookings = bookings.filter(b => {
                     const contract = store.getContract(b.contractId);
@@ -1663,8 +1788,13 @@
                 });
             }
 
+            // 狀態過濾
+            if (statusFilter) {
+                bookings = bookings.filter(b => b.status === statusFilter);
+            }
+
             if (bookings.length === 0) {
-                bookingsList.innerHTML = '<div class="empty-state">尚無預約' + (searchValue ? '（搜尋無結果）' : '，請先建立合約並點擊「+ 新增預約」') + '</div>';
+                bookingsList.innerHTML = '<div class="empty-state">尚無預約' + (searchValue ? '（搜尋無結果）' : '') + '</div>';
             } else {
                 bookingsList.innerHTML = bookings.map(booking => {
                     const contract = store.getContract(booking.contractId);
@@ -1675,6 +1805,7 @@
                     if (booking.status === '完成') statusBadgeClass = 'completed';
                     if (booking.status === '進行中') statusBadgeClass = 'inprogress';
                     const expandId = `booking-expand-${booking.id}`;
+                    const canDelete = booking.status !== '完成';
 
                     return `
                         <div class="list-item">
@@ -1693,106 +1824,99 @@
                                 <div class="list-item-actions" style="margin-top: 10px;">
                                     ${booking.status !== '完成' ? `<button class="btn btn-sm btn-primary" onclick="openBookingStatusModal('${booking.id}')">更新狀態</button>` : ''}
                                     <button class="btn btn-sm btn-secondary" onclick="editBooking('${booking.id}')">編輯</button>
-                                    ${booking.status !== '完成' ? `<button class="btn btn-sm btn-danger" onclick="deleteBookingConfirm('${booking.id}', '${client.clientName}', ${booking.serviceHours})">刪除</button>` : ''}
+                                    ${canDelete ? `<button class="btn btn-sm btn-danger" onclick="deleteBooking('${booking.id}', '${client.clientName}')">刪除</button>` : ''}
                                 </div>
                             </div>
                         </div>
                     `;
                 }).join('');
             }
-
-            updateBookingContractSelect();
-        }
-
-        function updateBookingContractSelect() {
-            const contractSelect = document.getElementById('booking-contract');
-            const contracts = store.getContracts();
-
-            contractSelect.innerHTML = '<option value="">-- 請選擇合約 --</option>';
-            contracts.forEach(contract => {
-                const client = store.getClient(contract.clientId);
-                const option = document.createElement('option');
-                option.value = contract.id;
-                const usedHours = calculateUsedHours(contract.id);
-                const bonusHours = contract.bonusHours || 0;
-                const preUsedHours = contract.preUsedHours || 0;
-                const totalAvailableHours = contract.totalHours + bonusHours;
-                const remainingHours = totalAvailableHours - preUsedHours - usedHours;
-                option.textContent = `${client.clientName} (可用 ${totalAvailableHours}h, 剩餘 ${remainingHours}h)`;
-                contractSelect.appendChild(option);
-            });
         }
 
         function updateBookingTab() {
             if (!store.data.selectedServiceType || store.getContracts().length === 0) {
                 document.getElementById('booking-warning').style.display = 'block';
-                document.getElementById('booking-contract-select').style.display = 'none';
                 document.getElementById('add-booking-btn').style.display = 'none';
             } else {
                 document.getElementById('booking-warning').style.display = 'none';
-                document.getElementById('booking-contract-select').style.display = 'block';
                 document.getElementById('add-booking-btn').style.display = 'block';
             }
             renderBookings();
         }
 
-        document.getElementById('booking-contract').addEventListener('change', function() {
-            if (this.value) {
-                const contract = store.getContract(this.value);
-                const client = store.getClient(contract.clientId);
-                const usedHours = calculateUsedHours(contract.id);
-                const bonusHours = contract.bonusHours || 0;
-                const preUsedHours = contract.preUsedHours || 0;
-                const totalAvailableHours = contract.totalHours + bonusHours;
-                const remainingHours = totalAvailableHours - preUsedHours - usedHours;
-
-                document.getElementById('booking-client-name').textContent = client.clientName;
-                document.getElementById('booking-address').textContent = client.address;
-                document.getElementById('booking-remaining-hours').textContent = remainingHours;
-                document.getElementById('booking-contract-info').style.display = 'block';
-            } else {
-                document.getElementById('booking-contract-info').style.display = 'none';
-            }
-        });
-
         function openBookingModal() {
-            const selectedContractId = document.getElementById('booking-contract').value;
-            if (!selectedContractId) {
-                alert('請先選擇合約');
-                return;
-            }
-
-            const contract = store.getContract(selectedContractId);
-            const client = store.getClient(contract.clientId);
-            const usedHours = calculateUsedHours(contract.id);
-            const bonusHours = contract.bonusHours || 0;
-            const preUsedHours = contract.preUsedHours || 0;
-            const totalAvailableHours = contract.totalHours + bonusHours;
-            const remainingHours = totalAvailableHours - preUsedHours - usedHours;
-
             document.getElementById('booking-form').reset();
             document.getElementById('booking-modal-title').textContent = '新增預約';
             document.getElementById('booking-modal').dataset.bookingId = '';
-            document.getElementById('booking-modal').dataset.contractId = selectedContractId;
+            document.getElementById('booking-modal').dataset.contractId = '';
+            document.getElementById('booking-info-display').style.display = 'none';
+            document.getElementById('booking-client-search-group').style.display = 'block';
+            document.getElementById('booking-client-search-input').value = '';
+            document.getElementById('booking-client-id-hidden').value = '';
+            document.getElementById('booking-client-selected-info').style.display = 'none';
+            document.getElementById('booking-client-dropdown').style.display = 'none';
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('booking-date').value = today;
+            document.getElementById('booking-modal').classList.add('show');
+            initBookingClientSearch();
+        }
 
-            document.getElementById('booking-info-client').textContent = client.clientName;
-            document.getElementById('booking-info-home').textContent = client.homeType;
-            document.getElementById('booking-info-address').textContent = client.address;
-            document.getElementById('booking-info-remaining').textContent = remainingHours;
+        function initBookingClientSearch() {
+            const input = document.getElementById('booking-client-search-input');
+            const dropdown = document.getElementById('booking-client-dropdown');
+            const newInput = input.cloneNode(true);
+            input.parentNode.replaceChild(newInput, input);
+            newInput.addEventListener('input', function() {
+                const val = this.value.toLowerCase();
+                if (!val) { dropdown.style.display = 'none'; return; }
+                const clients = store.getClients().filter(c =>
+                    c.clientName.toLowerCase().includes(val) || (c.phone && c.phone.includes(val))
+                );
+                dropdown.innerHTML = clients.length === 0
+                    ? '<div style="padding:10px;color:#7f8c8d;">無匹配客戶</div>'
+                    : clients.map(c => `
+                        <div style="padding:10px;border-bottom:1px solid #ecf0f1;cursor:pointer;" onclick="selectBookingClient('${c.id}','${c.clientName.replace(/'/g,"\\'")}')">
+                            <strong>${c.clientName}</strong> (${c.phone})<br>
+                            <small style="color:#7f8c8d;">${c.address || '未填寫地址'}</small>
+                        </div>`).join('');
+                dropdown.style.display = 'block';
+            });
+        }
+
+        function selectBookingClient(clientId, clientName) {
+            document.getElementById('booking-client-id-hidden').value = clientId;
+            document.getElementById('booking-client-search-input').value = clientName;
+            document.getElementById('booking-client-dropdown').style.display = 'none';
+
+            const contract = store.getLatestActiveContract(clientId);
+            if (!contract) {
+                document.getElementById('booking-client-selected-info').innerHTML = `⚠️ <strong>${clientName}</strong> 目前沒有進行中的合約`;
+                document.getElementById('booking-client-selected-info').style.display = 'block';
+                document.getElementById('booking-info-display').style.display = 'none';
+                document.getElementById('booking-modal').dataset.contractId = '';
+                return;
+            }
+
+            document.getElementById('booking-modal').dataset.contractId = contract.id;
+            const client = store.getClient(clientId);
+            const usedHours = calculateUsedHours(contract.id);
+            const bonusHours = contract.bonusHours || 0;
+            const preUsedHours = contract.preUsedHours || 0;
+            const remaining = contract.totalHours + bonusHours - preUsedHours - usedHours;
+
+            document.getElementById('booking-client-selected-info').innerHTML =
+                `✅ 已選擇：<strong>${clientName}</strong>　合約：${contract.totalHours}h（剩餘 ${remaining}h）`;
+            document.getElementById('booking-client-selected-info').style.display = 'block';
+
+            document.getElementById('booking-info-client').textContent = clientName;
+            document.getElementById('booking-info-home').textContent = client?.homeType || '';
+            document.getElementById('booking-info-address').textContent = client?.address || '';
+            document.getElementById('booking-info-remaining').textContent = remaining;
             document.getElementById('booking-info-display').style.display = 'block';
 
             const st = store.getServiceType(store.data.selectedServiceType);
-            if (st.typeName === '除塵蟎' || st.typeName === '居家清潔') {
-                document.getElementById('booking-essential-oil-group').style.display = 'block';
-            } else {
-                document.getElementById('booking-essential-oil-group').style.display = 'none';
-            }
-
-            // 設定預設日期為今天
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('booking-date').value = today;
-
-            document.getElementById('booking-modal').classList.add('show');
+            document.getElementById('booking-essential-oil-group').style.display =
+                store.data.selectedServiceType ? 'block' : 'none';
         }
 
         function closeBookingModal() {
@@ -1804,6 +1928,7 @@
 
             const contractId = document.getElementById('booking-modal').dataset.contractId;
             const bookingId = document.getElementById('booking-modal').dataset.bookingId;
+            if (!contractId) { showToast('請先選擇客戶'); return; }
             const contract = store.getContract(contractId);
             const usedHours = calculateUsedHours(contractId);
             const bonusHours = contract.bonusHours || 0;
@@ -1813,7 +1938,7 @@
             const serviceHours = parseFloat(document.getElementById('booking-hours').value);
 
             if (serviceHours > remainingHours) {
-                alert(`❌ 服務時數不能超過剩餘時數 (${remainingHours} 小時)\n合約時數: ${contract.totalHours}h + 贈送: ${bonusHours}h${preUsedHours > 0 ? ' - 他人已服務: ' + preUsedHours + 'h' : ''}`);
+                showToast(`❌ 服務時數不能超過剩餘時數 (${remainingHours} 小時)\n合約時數: ${contract.totalHours}h + 贈送: ${bonusHours}h${preUsedHours > 0 ? ' - 他人已服務: ' + preUsedHours + 'h' : ''}`);
                 return;
             }
 
@@ -1832,7 +1957,7 @@
                 status: '未開始'
             };
 
-            if (st.typeName === '除塵蟎' || st.typeName === '居家清潔') {
+            if (true) {  // 所有服務類型都顯示精油選項
                 booking.useEssentialOil = document.getElementById('booking-essential-oil').checked;
             }
 
@@ -1855,7 +1980,9 @@
             if (!booking) return;
 
             const contract = store.getContract(booking.contractId);
+            if (!contract) return;
             const client = store.getClient(contract.clientId);
+            if (!client) return;
             const usedHours = calculateUsedHours(contract.id);
             const bonusHours = contract.bonusHours || 0;
             const preUsedHours = contract.preUsedHours || 0;
@@ -1864,20 +1991,23 @@
 
             document.getElementById('booking-modal-title').textContent = '編輯預約';
             document.getElementById('booking-modal').dataset.bookingId = bookingId;
+            document.getElementById('booking-modal').dataset.contractId = booking.contractId;
+            // 編輯時隱藏客戶搜尋
+            document.getElementById('booking-client-search-group').style.display = 'none';
 
             document.getElementById('booking-info-client').textContent = client.clientName;
             document.getElementById('booking-info-home').textContent = client.homeType;
             document.getElementById('booking-info-address').textContent = client.address;
-            document.getElementById('booking-info-remaining').textContent = remainingHours + booking.serviceHours; // 原始剩餘
+            document.getElementById('booking-info-remaining').textContent = remainingHours + booking.serviceHours;
             document.getElementById('booking-info-display').style.display = 'block';
 
             document.getElementById('booking-date').value = booking.bookingDate;
             document.getElementById('booking-time').value = booking.bookingTime;
             document.getElementById('booking-hours').value = booking.serviceHours;
-            document.getElementById('booking-notes').value = booking.serviceNotes;
+            document.getElementById('booking-notes').value = booking.serviceNotes || '';
 
             const st = store.getServiceType(store.data.selectedServiceType);
-            if (st.typeName === '除塵蟎' || st.typeName === '居家清潔') {
+            if (true) {  // 所有服務類型都顯示精油選項
                 document.getElementById('booking-essential-oil-group').style.display = 'block';
                 document.getElementById('booking-essential-oil').checked = booking.useEssentialOil;
             } else {
@@ -1917,7 +2047,6 @@
 
             store.updateBooking(bookingId, { status: newStatus });
 
-            // 當預約完成時，自動生成 Payment 紀錄
             if (newStatus === '完成') {
                 const booking = store.getBooking(bookingId);
                 const contract = store.getContract(booking.contractId);
@@ -1925,15 +2054,15 @@
                 const client = store.getClient(contract.clientId);
                 if (!client) { closeBookingStatusModal(); updateAllTabs(); return; }
 
-                // 檢查是否已有該預約的 Payment
                 const existingPayment = store.data.payments.find(p => p.bookingId === bookingId);
-                
                 if (!existingPayment) {
-                    // 公司派固定600/h，自接按合約單價
-                    const hourlyRate = contract.cooperationMethod === '公司派' ? 600 : contract.hourlyRate;
+                    // 公司派用paymentRate，自接用hourlyRate
+                    const hourlyRate = contract.cooperationMethod === '公司派'
+                        ? (contract.paymentRate || 600)
+                        : contract.hourlyRate;
                     const amountDue = hourlyRate * booking.serviceHours;
 
-                    const payment = {
+                    store.addPayment({
                         bookingId: bookingId,
                         clientId: contract.clientId,
                         clientName: client.clientName,
@@ -1945,9 +2074,8 @@
                         actualPaymentDate: null,
                         modificationHistory: [],
                         isAutoGenerated: true
-                    };
-                    store.addPayment(payment);
-                    alert(`✅ 預約已完成\n系統自動生成收款紀錄\n${contract.cooperationMethod}・單價 NT$${hourlyRate}/h\n應收: NT$${amountDue.toLocaleString()}`);
+                    });
+                    showToast(`✅ 預約已完成\n系統自動生成收款紀錄\n${contract.cooperationMethod}・費率 NT$${hourlyRate}/h\n應收: NT$${amountDue.toLocaleString()}`);
                 }
             }
 
@@ -1959,18 +2087,24 @@
         function renderPayments() {
             const paymentsList = document.getElementById('payments-list');
             const searchValue = document.getElementById('payment-search') ? document.getElementById('payment-search').value.toLowerCase() : '';
+            const statusFilter = document.getElementById('payment-status-filter') ? document.getElementById('payment-status-filter').value : '未收';
             let payments = store.getPayments();
 
             // 排序：最新在最上方
             payments = payments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-            // 搜索過濾：按客戶姓名
+            // 搜索過濾
             if (searchValue) {
-                payments = payments.filter(p => p.clientName.toLowerCase().includes(searchValue));
+                payments = payments.filter(p => p.clientName && p.clientName.toLowerCase().includes(searchValue));
+            }
+
+            // 狀態過濾
+            if (statusFilter) {
+                payments = payments.filter(p => p.paymentStatus === statusFilter);
             }
 
             if (payments.length === 0) {
-                paymentsList.innerHTML = '<div class="empty-state">尚無收款紀錄' + (searchValue ? '（搜尋無結果）' : '，請在預約管理中將預約狀態改為「完成」，系統將自動生成收款紀錄') + '</div>';
+                paymentsList.innerHTML = '<div class="empty-state">尚無收款紀錄' + (searchValue || statusFilter ? '（篩選無結果）' : '，請在預約管理中將預約狀態改為「完成」') + '</div>';
             } else {
                 paymentsList.innerHTML = payments.map(payment => {
                     let statusBadgeClass = 'unpaid';
@@ -1986,7 +2120,7 @@
                         <div class="list-item">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div style="flex: 1;">
-                                    <h4>${payment.clientName}（${cooperationMethod}）</h4>
+                                    <h4>${payment.clientName}${cooperationMethod ? `（${cooperationMethod}）` : ''}</h4>
                                     <p>預約日期: ${bookingDate} | 時數: ${payment.serviceHours}h</p>
                                     <p>單價: NT$${hourlyRate}/h | 金額: <strong>NT$${payment.amountDue.toLocaleString()}</strong></p>
                                     <p>狀態: <span class="status-badge ${statusBadgeClass}">${payment.paymentStatus}</span></p>
@@ -2015,15 +2149,13 @@
             const paidTotal = payments.filter(p => p.paymentStatus === '已收').reduce((sum, p) => sum + p.amountDue, 0);
             const unpaidTotal = payments.filter(p => p.paymentStatus === '未收').reduce((sum, p) => sum + p.amountDue, 0);
 
-            const statsHtml = `
+            document.getElementById('payment-stats').innerHTML = `
                 <div class="info-box">
-                    <h3>本期統計</h3>
+                    <h3>收款統計（全部）</h3>
                     <p>✓ 已收款: <strong>NT$${paidTotal.toLocaleString()}</strong> (${payments.filter(p => p.paymentStatus === '已收').length} 筆)</p>
                     <p>○ 未收款: <strong>NT$${unpaidTotal.toLocaleString()}</strong> (${payments.filter(p => p.paymentStatus === '未收').length} 筆)</p>
                 </div>
             `;
-
-            document.getElementById('payment-stats').innerHTML = statsHtml;
         }
 
         function updatePaymentTab() {
@@ -2040,7 +2172,7 @@
             const completedBookings = store.getBookings().filter(b => b.status === '完成');
 
             if (completedBookings.length === 0) {
-                alert('沒有已完成的預約');
+                showToast('沒有已完成的預約');
                 return;
             }
 
@@ -2096,7 +2228,7 @@
             const paymentId = document.getElementById('payment-modal').dataset.paymentId;
 
             if (!bookingId) {
-                alert('請選擇預約');
+                showToast('請選擇預約');
                 return;
             }
 
@@ -2200,7 +2332,7 @@
         function showPaymentHistory(paymentId) {
             const payment = store.data.payments.find(p => p.id === paymentId);
             if (!payment || !payment.modificationHistory || payment.modificationHistory.length === 0) {
-                alert('無修改記錄');
+                showToast('無修改記錄');
                 return;
             }
 
@@ -2230,6 +2362,7 @@
             if (!payment) {
                 payment = store.data.payments.find(p => p.id === paymentId);
             }
+            if (!payment) return;
 
             document.getElementById('payment-modal-title').textContent = '編輯收款';
             document.getElementById('payment-modal').dataset.paymentId = paymentId;
@@ -2267,7 +2400,7 @@
                 allContracts.filter(c => c.cooperationMethod === '自接').map(c => c.clientId)
             ).size;
 
-            // 填充年月篩選選項
+            // 填充年月篩選下拉
             const yearSel = document.getElementById('dash-year');
             const monthSel = document.getElementById('dash-month');
             if (yearSel) {
@@ -2291,7 +2424,7 @@
                 monthSel.value = curMonth;
             }
 
-            // 按年月篩選收款
+            // 按年月篩選
             if (filterMonth) {
                 allPayments = allPayments.filter(p => {
                     const b = store.getBooking(p.bookingId);
@@ -2321,16 +2454,18 @@
                 if (p.paymentStatus === '未收') { monthlyStats[month].unpaid += p.amountDue || 0; monthlyStats[month].unpaidCount++; }
             });
 
+            const periodLabel = filterMonth ? `（${filterMonth}）` : filterYear ? `（${filterYear} 年）` : '（全部）';
+
             let monthlyHtml = '';
             const sortedMonths = Object.keys(monthlyStats).sort().reverse();
             if (sortedMonths.length > 0) {
-                monthlyHtml = `<h3 style="margin-top: 20px;">📅 月份收款統計</h3><div class="info-box">`;
+                monthlyHtml = `<h3 style="margin-top:20px;">📅 月份收款統計</h3><div class="info-box">`;
                 sortedMonths.forEach(month => {
                     const s = monthlyStats[month];
                     monthlyHtml += `
-                        <div style="padding: 8px 0; border-bottom: 1px solid #ecf0f1;">
+                        <div style="padding:8px 0;border-bottom:1px solid #ecf0f1;">
                             <strong>${month}</strong>
-                            <div style="padding-left: 10px; font-size: 13px; color: #555; margin-top: 4px;">
+                            <div style="padding-left:10px;font-size:13px;color:#555;margin-top:4px;">
                                 <p>應收: NT$${s.total.toLocaleString()}（${s.totalCount}筆）&nbsp;
                                    已收: NT$${s.paid.toLocaleString()}（${s.paidCount}筆）&nbsp;
                                    未收: NT$${s.unpaid.toLocaleString()}（${s.unpaidCount}筆）</p>
@@ -2340,26 +2475,20 @@
                 monthlyHtml += '</div>';
             }
 
-            const periodLabel = filterMonth ? `（${filterMonth}）` : filterYear ? `（${filterYear} 年）` : '（全部）';
-
-            const html = `
+            dashboardContent.innerHTML = `
                 <div class="info-box">
                     <h3>📊 客戶統計</h3>
                     <p>現有客戶數（服務中）: <strong>${activeClients} 位</strong></p>
                     <p>自接客戶數: <strong>${selfClients} 位</strong></p>
                 </div>
-
                 <div class="info-box">
                     <h3>💰 收款狀態統計 ${periodLabel}</h3>
                     <p>應收總額: <strong>NT$${totalAmount.toLocaleString()}</strong>（${allPayments.length}筆）</p>
                     <p>✓ 已收款: <strong>NT$${paidAmount.toLocaleString()}</strong>（${allPayments.filter(p => p.paymentStatus === '已收').length}筆）</p>
                     <p>○ 未收款: <strong>NT$${unpaidAmount.toLocaleString()}</strong>（${allPayments.filter(p => p.paymentStatus === '未收').length}筆）</p>
                 </div>
-
                 ${monthlyHtml}
             `;
-
-            dashboardContent.innerHTML = html;
         }
 
         function calculateMonthlyStats(paidPayments) {
@@ -2408,19 +2537,19 @@
             const relatedContracts = store.getContracts().filter(c => c.clientId === clientId);
             
             if (relatedContracts.length > 0) {
-                alert(`⚠️ 無法刪除！\n\n客戶「${clientName}」有 ${relatedContracts.length} 份合約\n\n請先刪除相關合約，再刪除客戶。`);
+                showToast(`⚠️ 無法刪除！\n\n客戶「${clientName}」有 ${relatedContracts.length} 份合約\n\n請先刪除相關合約，再刪除客戶。`);
                 return;
             }
 
-            if (confirm(`⚠️ 確定要刪除客戶「${clientName}」嗎？\n\n此操作無法復原！`)) {
+            showConfirm(`確定要刪除客戶「${clientName}」嗎？此操作無法復原！`, () => {
                 const index = store.data.clients.findIndex(c => c.id === clientId);
                 if (index > -1) {
                     store.data.clients.splice(index, 1);
                     store.save();
-                    alert('✅ 客戶已刪除');
+                    showToast('✅ 客戶已刪除');
                     updateAllTabs();
                 }
-            }
+            });
         }
 
         function deleteContract(contractId, clientName) {
@@ -2428,7 +2557,7 @@
             const relatedBookings = store.getBookings().filter(b => b.contractId === contractId);
             
             if (relatedBookings.length > 0) {
-                alert(`⚠️ 無法刪除！\n\n合約有 ${relatedBookings.length} 個預約\n\n請先刪除相關預約，再刪除合約。`);
+                showToast(`⚠️ 無法刪除！\n\n合約有 ${relatedBookings.length} 個預約\n\n請先刪除相關預約，再刪除合約。`);
                 return;
             }
 
@@ -2438,19 +2567,7 @@
                 if (index > -1) {
                     store.data.contracts.splice(index, 1);
                     store.save();
-                    alert('✅ 合約已刪除');
-                    updateAllTabs();
-                }
-            }
-        }
-
-        function deleteBookingConfirm(bookingId, clientName, serviceHours) {
-            if (confirm(`確定要刪除「${clientName}」的預約嗎？\n• 已預約時數 ${serviceHours}h 將被取消\n• 合約剩餘時數將恢復\n\n此操作無法復原！`)) {
-                // 刪除預約（未完成的預約不會有收款紀錄）
-                const index = store.data.bookings.findIndex(b => b.id === bookingId);
-                if (index > -1) {
-                    store.data.bookings.splice(index, 1);
-                    store.save();
+                    showToast('✅ 合約已刪除');
                     updateAllTabs();
                 }
             }
@@ -2485,7 +2602,7 @@
                 }
                 
                 store.save();
-                alert('✅ 預約及相關收款已刪除');
+                showToast('✅ 預約及相關收款已刪除');
                 updateAllTabs();
             }
         }
@@ -2494,27 +2611,88 @@
             const clientSearch = document.getElementById('client-search');
             const clientStatusFilter = document.getElementById('client-status-filter');
             const contractSearch = document.getElementById('contract-search');
+            const contractStatusFilter = document.getElementById('contract-status-filter');
             const bookingSearch = document.getElementById('booking-search');
+            const bookingStatusFilter = document.getElementById('booking-status-filter');
             const paymentSearch = document.getElementById('payment-search');
+            const paymentStatusFilter = document.getElementById('payment-status-filter');
 
-            if (clientSearch) {
-                clientSearch.addEventListener('input', () => renderClients());
+            if (clientSearch) clientSearch.addEventListener('input', () => renderClients());
+            if (clientStatusFilter) clientStatusFilter.addEventListener('change', () => renderClients());
+            if (contractSearch) contractSearch.addEventListener('input', () => renderContracts());
+            if (contractStatusFilter) contractStatusFilter.addEventListener('change', () => renderContracts());
+            if (bookingSearch) bookingSearch.addEventListener('input', () => renderBookings());
+            if (bookingStatusFilter) bookingStatusFilter.addEventListener('change', () => renderBookings());
+            if (paymentSearch) paymentSearch.addEventListener('input', () => renderPayments());
+            if (paymentStatusFilter) paymentStatusFilter.addEventListener('change', () => renderPayments());
+        }
+
+        // ==================== 資料備份 ====================
+        function exportData() {
+            const data = localStorage.getItem('servicecrm_data');
+            if (!data || JSON.parse(data).clients?.length === 0) {
+                showToast('⚠️ 目前沒有資料可以匯出');
+                return;
             }
-            if (clientStatusFilter) {
-                clientStatusFilter.addEventListener('change', () => renderClients());
-            }
-            if (contractSearch) {
-                contractSearch.addEventListener('input', () => renderContracts());
-            }
-            if (bookingSearch) {
-                bookingSearch.addEventListener('input', () => renderBookings());
-            }
-            if (paymentSearch) {
-                paymentSearch.addEventListener('input', () => renderPayments());
-            }
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const date = new Date().toISOString().split('T')[0];
+            a.href = url;
+            a.download = `crm-backup-${date}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(`✅ 備份完成！檔案名稱：crm-backup-${date}.json`);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const fileRef = file;
+            event.target.value = '';
+            showConfirm('⚠️ 匯入將會覆蓋現有所有資料，確定繼續嗎？', () => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (!data.clients || !data.contracts || !data.bookings || !data.payments) {
+                            showToast('❌ 檔案格式錯誤');
+                            return;
+                        }
+                        localStorage.setItem('servicecrm_data', JSON.stringify(data));
+                        store.initData();
+                        updateAllTabs();
+                        showToast(`✅ 匯入成功！客戶${data.clients.length}位・合約${data.contracts.length}份・預約${data.bookings.length}筆`);
+                    } catch(err) {
+                        showToast('❌ 檔案讀取失敗，請確認是正確的 JSON 備份檔案');
+                    }
+                };
+                reader.readAsText(fileRef);
+            });
+        }
+
+        // ==================== UI 工具 ====================
+        function showToast(msg, duration = 2500) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => { t.style.display = 'none'; }, duration);
+        }
+
+        function showConfirm(msg, onOk) {
+            const overlay = document.getElementById('confirm-overlay');
+            document.getElementById('confirm-message').textContent = msg;
+            overlay.style.display = 'flex';
+            const ok = document.getElementById('confirm-ok');
+            const cancel = document.getElementById('confirm-cancel');
+            const cleanup = () => { overlay.style.display = 'none'; ok.onclick = null; cancel.onclick = null; };
+            ok.onclick = () => { cleanup(); onOk(); };
+            cancel.onclick = () => { cleanup(); };
         }
 
         function updateAllTabs() {
+            renderSettingsPage();
             updateClientTab();
             updateContractTab();
             updateBookingTab();
@@ -2526,16 +2704,12 @@
         // ==================== 初始化 ====================
         function initBookingTimeOptions() {
             const bookingTimeSelect = document.getElementById('booking-time');
-            
-            // 清除原有選項（保留placeholder）
             while (bookingTimeSelect.options.length > 1) {
                 bookingTimeSelect.remove(1);
             }
-            
-            // 生成8:00-21:00的每半小時時段
             for (let hour = 8; hour <= 21; hour++) {
                 ['00', '30'].forEach(min => {
-                    if (hour === 21 && min === '30') return; // 不超過21:00
+                    if (hour === 21 && min === '30') return;
                     const timeStr = String(hour).padStart(2, '0') + ':' + min;
                     const option = document.createElement('option');
                     option.value = timeStr;
@@ -2545,11 +2719,65 @@
             }
         }
 
+        // 讓onclick可以在任何環境找到這些函數
+        window.exportData = exportData;
+        window.importData = importData;
+        window.saveProviderName = saveProviderName;
+        window.addServiceType = addServiceType;
+        window.deleteServiceType = deleteServiceType;
+        window.switchServiceType = switchServiceType;
+        window.toggleExpand = toggleExpand;
+        window.openContractModal = openContractModal;
+        window.openBookingModal = openBookingModal;
+        window.editClient = editClient;
+        window.deleteClient = deleteClient;
+        window.editContract = editContract;
+        window.deleteContract = deleteContract;
+        window.terminateContract = terminateContract;
+        window.editBooking = editBooking;
+        window.deleteBooking = deleteBooking;
+        window.openBookingStatusModal = openBookingStatusModal;
+        window.closeBookingStatusModal = closeBookingStatusModal;
+        window.editPayment = editPayment;
+        window.showPaymentHistory = showPaymentHistory;
+        window.closePaymentModal = closePaymentModal;
+        window.closePaymentHistoryModal = closePaymentHistoryModal;
+        window.closeClientModal = closeClientModal;
+        window.closeContractModal = closeContractModal;
+        window.closeBookingModal = closeBookingModal;
+        window.selectContractClient = selectContractClient;
+        window.selectBookingClient = selectBookingClient;
+        window.confirmPaymentStatusChange = confirmPaymentStatusChange;
+        window.closePaymentStatusWarning = closePaymentStatusWarning;
+        window.autoFillExpireDate = autoFillExpireDate;
+        window.renderDashboard = renderDashboard;
+
         window.addEventListener('load', function() {
             initStep1();
             initBookingTimeOptions();
             updateAllTabs();
+
+            // 匯入檔案事件
+            const importFile = document.getElementById('import-file');
+            if (importFile) {
+                importFile.addEventListener('change', function(e) {
+                    importData(e);
+                });
+            }
         });
     </script>
+    <!-- Toast 提示 -->
+    <div id="toast" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#2c3e50;color:white;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:80%;text-align:center;"></div>
+
+    <!-- 確認對話框 -->
+    <div id="confirm-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;display:none;align-items:center;justify-content:center;">
+        <div style="background:white;padding:24px;border-radius:12px;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+            <p id="confirm-message" style="margin-bottom:20px;font-size:15px;color:#2c3e50;"></p>
+            <div style="display:flex;gap:10px;justify-content:center;">
+                <button id="confirm-cancel" class="btn btn-secondary">取消</button>
+                <button id="confirm-ok" class="btn btn-danger">確定</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
