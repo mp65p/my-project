@@ -2508,13 +2508,16 @@
                 bookingTimeSelect.remove(1);
             }
             
-            // 生成8:00-21:00的所有小時時段
+            // 生成8:00-21:00的每半小時時段
             for (let hour = 8; hour <= 21; hour++) {
-                const timeStr = String(hour).padStart(2, '0') + ':00';
-                const option = document.createElement('option');
-                option.value = timeStr;
-                option.textContent = timeStr;
-                bookingTimeSelect.appendChild(option);
+                ['00', '30'].forEach(min => {
+                    if (hour === 21 && min === '30') return; // 不超過21:00
+                    const timeStr = String(hour).padStart(2, '0') + ':' + min;
+                    const option = document.createElement('option');
+                    option.value = timeStr;
+                    option.textContent = timeStr;
+                    bookingTimeSelect.appendChild(option);
+                });
             }
         }
 
