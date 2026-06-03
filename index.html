@@ -662,6 +662,17 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="contract-sign-date">簽約日期 *</label>
+                    <input type="date" id="contract-sign-date" required onchange="autoFillExpireDate()">
+                </div>
+
+                <div class="form-group">
+                    <label for="contract-expire-date">到期日期</label>
+                    <input type="date" id="contract-expire-date">
+                    <small style="color: #7f8c8d;">預設為簽約日 + 2 年，可手動修改</small>
+                </div>
+
+                <div class="form-group">
                     <label for="contract-notes">合約備註</label>
                     <textarea id="contract-notes"></textarea>
                 </div>
@@ -1436,6 +1447,7 @@
                             <div id="${expandId}" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ecf0f1;">
                                 <p>合約總價: <strong>NT$${contract.totalPrice.toLocaleString()}</strong></p>
                                 <p>類型: ${contract.contractType} | 合作: ${contract.cooperationMethod}</p>
+                                ${contract.signDate ? `<p>簽約日: ${contract.signDate}${contract.expireDate ? ` | 到期日: ${contract.expireDate}` : ''}</p>` : ''}
                                 ${contract.notes ? `<p><strong>備註:</strong> ${contract.notes}` : ''}
                                 <div class="list-item-actions" style="margin-top: 10px;">
                                     ${!isEnded ? `<button class="btn btn-sm btn-secondary" onclick="editContract('${contract.id}')">編輯</button>` : ''}
@@ -1522,6 +1534,14 @@
         document.getElementById('contract-total-hours').addEventListener('input', updateContractTotalPrice);
         document.getElementById('contract-hourly-rate').addEventListener('input', updateContractTotalPrice);
 
+        function autoFillExpireDate() {
+            const signDate = document.getElementById('contract-sign-date').value;
+            if (!signDate) return;
+            const expire = new Date(signDate);
+            expire.setFullYear(expire.getFullYear() + 2);
+            document.getElementById('contract-expire-date').value = expire.toISOString().split('T')[0];
+        }
+
         function updateContractTotalPrice() {
             const hours = parseFloat(document.getElementById('contract-total-hours').value) || 0;
             const cooperation = document.querySelector('input[name="contract-cooperation"]:checked');
@@ -1565,6 +1585,8 @@
                 totalPrice: totalPrice,
                 cooperationMethod: cooperation,
                 contractType: document.querySelector('input[name="contract-type"]:checked').value,
+                signDate: document.getElementById('contract-sign-date').value,
+                expireDate: document.getElementById('contract-expire-date').value,
                 notes: document.getElementById('contract-notes').value
             };
 
@@ -1599,7 +1621,9 @@
             document.getElementById('contract-pre-used-hours').value = contract.preUsedHours || 0;
             document.querySelector(`input[name="contract-cooperation"][value="${contract.cooperationMethod}"]`).checked = true;
             document.querySelector(`input[name="contract-type"][value="${contract.contractType}"]`).checked = true;
-            document.getElementById('contract-notes').value = contract.notes;
+            document.getElementById('contract-notes').value = contract.notes || '';
+            document.getElementById('contract-sign-date').value = contract.signDate || '';
+            document.getElementById('contract-expire-date').value = contract.expireDate || '';
 
             if (contract.cooperationMethod === '自接') {
                 document.getElementById('contract-hourly-rate').value = contract.hourlyRate;
