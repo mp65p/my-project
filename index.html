@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>多業者到府服務 CRM + 預約 + 收款管理系統</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -874,6 +878,20 @@
     </div>
 
     <script>
+        // ==================== Firebase 初始化 ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGFQ1oKOrt723tJ3w7LIwDLSh0nGwRF30",
+            authDomain: "my-project-c89db.firebaseapp.com",
+            databaseURL: "https://my-project-c89db-default-rtdb.firebaseio.com",
+            projectId: "my-project-c89db",
+            storageBucket: "my-project-c89db.firebasestorage.app",
+            messagingSenderId: "301172719437",
+            appId: "1:301172719437:web:d3f24ce04e0e445bc38104"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const FB_KEY = 'servicecrm_v6';
+
         // ==================== 資料管理 ====================
         class DataStore {
             constructor() {
@@ -944,6 +962,70 @@
 
             save() {
                 localStorage.setItem('servicecrm_data', JSON.stringify(this.data));
+                // 同步到 Firebase
+                db.ref(FB_KEY).set(this.data).catch(err => {
+                    console.error('Firebase 儲存失敗:', err);
+                });
+            }
+
+            async loadFromFirebase() {
+                try {
+                    const snapshot = await db.ref(FB_KEY).get();
+                    if (snapshot.exists()) {
+                        this.data = snapshot.val();
+                        localStorage.setItem('servicecrm_data', JSON.stringify(this.data));
+                    } else {
+                        // Firebase 沒有資料，用 localStorage（第一次使用）
+                        this.initData();
+                        // 把 localStorage 資料上傳到 Firebase
+                        await db.ref(FB_KEY).set(this.data);
+                    }
+                    this.applyCompatibility();
+                } catch (err) {
+                    console.error('Firebase 載入失敗，使用本機資料:', err);
+                    this.initData();
+                }
+            }
+
+            applyCompatibility() {
+                if (!this.data.providerName && this.data.providers && this.data.providers[0]) {
+                    this.data.providerName = this.data.providers[0].name || '';
+                }
+                if (!this.data.providerName) this.data.providerName = '';
+                if (!this.data.serviceTypes) this.data.serviceTypes = [];
+                this.data.serviceTypes.forEach(st => {
+                    if (st.typeName === '維修') st.typeName = '維修服務';
+                    if (st.typeName === '居家清潔' || st.typeName === '除塵蟎') st.fields = st.fields || 'home';
+                    if (st.typeName === '維修服務') st.fields = st.fields || 'repair';
+                });
+                const seen = {};
+                this.data.serviceTypes = this.data.serviceTypes.filter(st => {
+                    if (seen[st.typeName]) return false;
+                    seen[st.typeName] = true;
+                    return true;
+                });
+                const fixed = [
+                    { id: 'st_clean',  typeName: '居家清潔', fields: 'home' },
+                    { id: 'st_mite',   typeName: '除塵蟎',   fields: 'home' },
+                    { id: 'st_repair', typeName: '維修服務', fields: 'repair' }
+                ];
+                fixed.forEach(f => {
+                    const existById = this.data.serviceTypes.find(st => st.id === f.id);
+                    const existByName = this.data.serviceTypes.find(st => st.typeName === f.typeName);
+                    if (!existById && !existByName) {
+                        this.data.serviceTypes.push(f);
+                    } else if (existByName && !existByName.fields) {
+                        existByName.fields = f.fields;
+                    }
+                });
+                if (this.data.selectedServiceType) {
+                    const exists = this.data.serviceTypes.find(st => st.id === this.data.selectedServiceType);
+                    if (!exists) this.data.selectedServiceType = this.data.serviceTypes[0]?.id || null;
+                }
+                if (!this.data.clients) this.data.clients = [];
+                if (!this.data.contracts) this.data.contracts = [];
+                if (!this.data.bookings) this.data.bookings = [];
+                if (!this.data.payments) this.data.payments = [];
             }
 
             addServiceType(typeName) {
@@ -2647,7 +2729,9 @@
                             return;
                         }
                         localStorage.setItem('servicecrm_data', JSON.stringify(data));
+                        db.ref(FB_KEY).set(data).catch(err => console.error('Firebase同步失敗:', err));
                         store.initData();
+                        store.applyCompatibility();
                         updateAllTabs();
                         showToast(`✅ 匯入成功！客戶${data.clients.length}位・合約${data.contracts.length}份・預約${data.bookings.length}筆`);
                     } catch(err) {
@@ -2739,7 +2823,13 @@
         window.autoFillExpireDate = autoFillExpireDate;
         window.renderDashboard = renderDashboard;
 
-        window.addEventListener('load', function() {
+        window.addEventListener('load', async function() {
+            // 從 Firebase 載入資料
+            await store.loadFromFirebase();
+
+            // 隱藏 Loading
+            document.getElementById('loading-overlay').style.display = 'none';
+
             initStep1();
             initBookingTimeOptions();
             updateAllTabs();
@@ -2755,6 +2845,13 @@
     </script>
     <!-- Toast 提示 -->
     <div id="toast" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#2c3e50;color:white;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:80%;text-align:center;"></div>
+
+    <!-- Loading 畫面 -->
+    <div id="loading-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.95);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div style="font-size:40px;margin-bottom:16px;">🔄</div>
+        <p style="font-size:16px;color:#2c3e50;font-weight:bold;">載入資料中...</p>
+        <p style="font-size:13px;color:#7f8c8d;margin-top:8px;">連線至雲端資料庫</p>
+    </div>
 
     <!-- 確認對話框 -->
     <div id="confirm-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;display:none;align-items:center;justify-content:center;">
