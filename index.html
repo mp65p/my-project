@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多業者到府服務 CRM + 預約 + 收款管理系統 v7-auth</title>
+    <title>多業者到府服務 CRM + 預約 + 收款管理系統 v7-final</title>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -906,6 +906,7 @@
         class DataStore {
             constructor() {
                 this.initData();
+                this._firebaseReady = false; // 防止未載入時寫入
             }
 
             initData() {
@@ -972,8 +973,25 @@
 
             save() {
                 localStorage.setItem('servicecrm_data', JSON.stringify(this.data));
-                // 同步到 Firebase
-                db.ref(FB_KEY).set(this.data).catch(err => {
+                if (!this._firebaseReady) {
+                    console.warn('Firebase 未就緒，跳過雲端儲存');
+                    return;
+                }
+
+                // 改用 update() 分節點寫入，防止整體替換時意外清空資料
+                const updateData = {
+                    providerName: this.data.providerName || '',
+                    selectedServiceType: this.data.selectedServiceType || null,
+                    serviceTypes: this.data.serviceTypes || []
+                };
+
+                // 業務資料：有資料才寫入，防止空陣列覆蓋 Firebase
+                if ((this.data.clients?.length || 0) > 0) updateData.clients = this.data.clients;
+                if ((this.data.contracts?.length || 0) > 0) updateData.contracts = this.data.contracts;
+                if ((this.data.bookings?.length || 0) > 0) updateData.bookings = this.data.bookings;
+                if ((this.data.payments?.length || 0) > 0) updateData.payments = this.data.payments;
+
+                db.ref(FB_KEY).update(updateData).catch(err => {
                     console.error('Firebase 儲存失敗:', err);
                 });
             }
@@ -982,27 +1000,25 @@
                 try {
                     const snapshot = await db.ref(FB_KEY).get();
                     if (snapshot.exists()) {
-                        // Firebase 有資料 → 只讀取，不寫入
                         this.data = snapshot.val();
                         localStorage.setItem('servicecrm_data', JSON.stringify(this.data));
                         this.applyCompatibility();
-                        // 不自動寫回，避免別人開啟時覆蓋資料
                     } else {
-                        // Firebase 沒資料 → 從 localStorage 讀取
                         this.initData();
                         this.applyCompatibility();
-                        // 只有有真實客戶資料時才上傳
                         const hasRealData = (this.data.clients?.length > 0) ||
                                             (this.data.contracts?.length > 0);
                         if (hasRealData) {
                             await db.ref(FB_KEY).set(this.data);
                         }
-                        // 沒有資料就不上傳，等到用戶真正新增後才會寫入
                     }
+                    this._firebaseReady = true;
+                    this._originalClientsCount = this.data.clients?.length || 0;
                 } catch (err) {
                     console.error('Firebase 載入失敗，使用本機資料:', err);
                     this.initData();
                     this.applyCompatibility();
+                    this._firebaseReady = false; // ❌ 載入失敗，禁止寫入保護資料
                 }
             }
 
@@ -2951,6 +2967,11 @@
                         initStep1();
                         initBookingTimeOptions();
                         updateAllTabs();
+                        // 授權碼流程後也要綁定匯入事件
+                        const importFile = document.getElementById('import-file');
+                        if (importFile) {
+                            importFile.addEventListener('change', function(e) { importData(e); });
+                        }
                     } else {
                         document.getElementById('auth-error').style.display = 'block';
                         this.textContent = '進入系統';
