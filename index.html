@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多業者到府服務 CRM + 預約 + 收款管理系統 v7-final</title>
+    <title>多業者到府服務 CRM + 預約 + 收款管理系統 v8</title>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -878,7 +878,14 @@
                         <label><input type="radio" name="booking-status" value="未開始" required> 未開始</label>
                         <label><input type="radio" name="booking-status" value="進行中"> 進行中</label>
                         <label><input type="radio" name="booking-status" value="完成"> 完成</label>
+                        <label><input type="radio" name="booking-status" value="刪除"> 🗑️ 刪除此預約</label>
                     </div>
+                </div>
+                <div id="booking-delete-warning" style="display:none;padding:10px;background:#fce4ec;border-radius:6px;color:#c0392b;font-size:13px;margin-bottom:12px;">
+                    ⚠️ 刪除後將同時移除對應的收款記錄，無法復原
+                </div>
+                <div id="booking-revert-warning" style="display:none;padding:10px;background:#fff3e0;border-radius:6px;color:#e65100;font-size:13px;margin-bottom:12px;">
+                    ⚠️ 從「完成」改回將同時刪除對應的收款記錄
                 </div>
 
                 <button type="submit" class="btn btn-success">確認</button>
@@ -2006,7 +2013,7 @@
                                 ${booking.useEssentialOil ? '<p>✓ 使用精油</p>' : ''}
                                 ${booking.serviceNotes ? `<p><strong>備註:</strong> ${booking.serviceNotes}` : ''}
                                 <div class="list-item-actions" style="margin-top: 10px;">
-                                    ${booking.status !== '完成' ? `<button class="btn btn-sm btn-primary" onclick="openBookingStatusModal('${booking.id}')">更新狀態</button>` : ''}
+                                    <button class="btn btn-sm btn-primary" onclick="openBookingStatusModal('${booking.id}')">更新狀態</button>
                                     <button class="btn btn-sm btn-secondary" onclick="editBooking('${booking.id}')">編輯</button>
                                     ${canDelete ? `<button class="btn btn-sm btn-danger" onclick="deleteBooking('${booking.id}', '${client.clientName}')">刪除</button>` : ''}
                                 </div>
@@ -2214,8 +2221,26 @@
             `;
 
             document.getElementById('booking-status-info').innerHTML = info;
-            document.querySelector(`input[name="booking-status"][value="${booking.status}"]`).checked = true;
+            document.getElementById('booking-delete-warning').style.display = 'none';
+            document.getElementById('booking-revert-warning').style.display = 'none';
+
+            // 帶入當前狀態
+            const currentRadio = document.querySelector(`input[name="booking-status"][value="${booking.status}"]`);
+            if (currentRadio) currentRadio.checked = true;
+
             document.getElementById('booking-status-modal').dataset.bookingId = bookingId;
+            document.getElementById('booking-status-modal').dataset.prevStatus = booking.status;
+
+            // 監聽狀態選擇，顯示對應警告
+            document.querySelectorAll('input[name="booking-status"]').forEach(radio => {
+                radio.onchange = function() {
+                    const delWarn = document.getElementById('booking-delete-warning');
+                    const revertWarn = document.getElementById('booking-revert-warning');
+                    delWarn.style.display = this.value === '刪除' ? 'block' : 'none';
+                    revertWarn.style.display = (booking.status === '完成' && this.value !== '完成') ? 'block' : 'none';
+                };
+            });
+
             document.getElementById('booking-status-modal').classList.add('show');
         }
 
@@ -2227,8 +2252,34 @@
             e.preventDefault();
 
             const bookingId = document.getElementById('booking-status-modal').dataset.bookingId;
+            const prevStatus = document.getElementById('booking-status-modal').dataset.prevStatus;
             const newStatus = document.querySelector('input[name="booking-status"]:checked').value;
 
+            // === 刪除預約 ===
+            if (newStatus === '刪除') {
+                // 同時刪除對應收款記錄
+                store.data.payments = store.data.payments.filter(p => p.bookingId !== bookingId);
+                // 刪除預約
+                store.data.bookings = store.data.bookings.filter(b => b.id !== bookingId);
+                store.save();
+                showToast('🗑️ 預約已刪除，收款記錄一併移除');
+                closeBookingStatusModal();
+                updateAllTabs();
+                return;
+            }
+
+            // === 從「完成」改回未完成 ===
+            if (prevStatus === '完成' && newStatus !== '完成') {
+                // 刪除對應收款記錄
+                store.data.payments = store.data.payments.filter(p => p.bookingId !== bookingId);
+                store.updateBooking(bookingId, { status: newStatus });
+                showToast('✅ 預約已改回未完成，收款記錄已移除');
+                closeBookingStatusModal();
+                updateAllTabs();
+                return;
+            }
+
+            // === 正常更新狀態 ===
             store.updateBooking(bookingId, { status: newStatus });
 
             if (newStatus === '完成') {
@@ -2240,12 +2291,10 @@
 
                 const existingPayment = store.data.payments.find(p => p.bookingId === bookingId);
                 if (!existingPayment) {
-                    // 公司派用paymentRate，自接用hourlyRate
                     const hourlyRate = contract.cooperationMethod === '公司派'
                         ? (contract.paymentRate || 600)
                         : contract.hourlyRate;
                     const amountDue = hourlyRate * booking.serviceHours;
-
                     store.addPayment({
                         bookingId: bookingId,
                         clientId: contract.clientId,
@@ -2259,7 +2308,7 @@
                         modificationHistory: [],
                         isAutoGenerated: true
                     });
-                    showToast(`✅ 預約已完成\n系統自動生成收款紀錄\n${contract.cooperationMethod}・費率 NT$${hourlyRate}/h\n應收: NT$${amountDue.toLocaleString()}`);
+                    showToast(`✅ 預約已完成，自動產生收款記錄 NT$${amountDue.toLocaleString()}`);
                 }
             }
 
