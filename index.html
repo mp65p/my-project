@@ -972,18 +972,27 @@
                 try {
                     const snapshot = await db.ref(FB_KEY).get();
                     if (snapshot.exists()) {
+                        // Firebase 有資料 → 只讀取，不寫入
                         this.data = snapshot.val();
                         localStorage.setItem('servicecrm_data', JSON.stringify(this.data));
+                        this.applyCompatibility();
+                        // 不自動寫回，避免別人開啟時覆蓋資料
                     } else {
-                        // Firebase 沒有資料，用 localStorage（第一次使用）
+                        // Firebase 沒資料 → 從 localStorage 讀取
                         this.initData();
-                        // 把 localStorage 資料上傳到 Firebase
-                        await db.ref(FB_KEY).set(this.data);
+                        this.applyCompatibility();
+                        // 只有有真實客戶資料時才上傳
+                        const hasRealData = (this.data.clients?.length > 0) ||
+                                            (this.data.contracts?.length > 0);
+                        if (hasRealData) {
+                            await db.ref(FB_KEY).set(this.data);
+                        }
+                        // 沒有資料就不上傳，等到用戶真正新增後才會寫入
                     }
-                    this.applyCompatibility();
                 } catch (err) {
                     console.error('Firebase 載入失敗，使用本機資料:', err);
                     this.initData();
+                    this.applyCompatibility();
                 }
             }
 
